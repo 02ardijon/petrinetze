@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Petri-Netze lernen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=STIX+Two+Text:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF3F5; --panel:#FFFFFF; --ink:#18222E; --muted:#526174; --line:#CBD7DE;
+  --grid:#E1EAEF; --grid2:#C9D8E0; --canvas:#FAFCFD;
+  --token:#1C3DA6; --en:#D9A70F; --en-fill:#FFF1BF; --sel:#1C6AD1; --sel-fill:#DDEBFB;
+  --ok:#1F6B4A; --ok-bg:#E1F1E8; --bad:#9E2F1C; --bad-bg:#F7E2DC;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F151B; --panel:#161F28; --ink:#E3EAF0; --muted:#98A8B9; --line:#2A3947;
+    --grid:#17212B; --grid2:#223140; --canvas:#121A22;
+    --token:#93B2FF; --en:#E3B32A; --en-fill:#3A3115; --sel:#72AAF2; --sel-fill:#1B2F48;
+    --ok:#72C79F; --ok-bg:#15301F; --bad:#EE8F79; --bad-bg:#3A1F19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F151B; --panel:#161F28; --ink:#E3EAF0; --muted:#98A8B9; --line:#2A3947;
+  --grid:#17212B; --grid2:#223140; --canvas:#121A22;
+  --token:#93B2FF; --en:#E3B32A; --en-fill:#3A3115; --sel:#72AAF2; --sel-fill:#1B2F48;
+  --ok:#72C79F; --ok-bg:#15301F; --bad:#EE8F79; --bad-bg:#3A1F19;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:16.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Newsreader',Georgia,'Times New Roman',serif;font-weight:600;line-height:1.2;margin:0}
+.m{font-family:'STIX Two Text','Cambria Math',Cambria,Georgia,serif;font-size:1.06em;white-space:nowrap}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--sel);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100%}
+.rail{min-width:0;position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  overflow-y:auto;padding:28px 18px 24px 22px;border-right:1px solid var(--line)}
+.brand{font-family:'Newsreader',Georgia,serif;font-size:1.55rem;font-weight:600;line-height:1.1;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:.9rem;margin:0 0 22px}
+.lessons{list-style:none;margin:0;padding:0;counter-reset:l}
+.lessons li{margin:0}
+.lesson-btn{display:grid;grid-template-columns:28px 1fr 18px;align-items:start;gap:8px;width:100%;text-align:left;
+  background:none;border:0;border-radius:8px;padding:9px 8px;cursor:pointer;line-height:1.3}
+.lesson-btn:hover{background:var(--grid)}
+.lesson-btn[aria-current="true"]{background:var(--panel);box-shadow:inset 3px 0 0 var(--token)}
+.lesson-num{font-family:'Newsreader',Georgia,serif;font-size:1.15rem;color:var(--muted);text-align:center}
+.lesson-btn[aria-current="true"] .lesson-num{color:var(--token)}
+.lesson-name{font-weight:700;font-size:.95rem}
+.lesson-kap{display:block;font-weight:400;color:var(--muted);font-size:.82rem;margin-top:2px}
+.lesson-done{color:var(--ok);font-weight:700;text-align:center}
+.rail-foot{margin-top:22px;color:var(--muted);font-size:.84rem}
+.progressbar{height:6px;background:var(--grid2);border-radius:3px;overflow:hidden;margin:6px 0 0}
+.progressbar span{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+
+main{padding:34px clamp(18px,4vw,52px) 80px;max-width:1080px;width:100%}
+.l-head{margin-bottom:18px}
+.l-kap{color:var(--muted);font-size:.92rem;margin:0 0 6px}
+.l-title{font-size:clamp(1.9rem,3.4vw,2.6rem)}
+.idea{max-width:72ch;font-size:1.06rem;margin:14px 0 0}
+.section{margin-top:34px}
+.section h2{font-size:1.45rem;margin-bottom:10px}
+.hint{color:var(--muted);max-width:72ch;margin:0 0 12px}
+
+.examples{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.92rem}
+.chip[aria-pressed="true"]{border-color:var(--token);color:var(--token);font-weight:700}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:7px 12px;cursor:pointer;font-size:.9rem}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.9rem}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--token);border-color:var(--token);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#0F151B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0F151B}}
+
+.stage{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(240px,1fr);gap:14px;align-items:start}
+.canvas{border:1px solid var(--line);border-radius:10px;background-color:var(--canvas);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+  linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);
+  background-size:12px 12px,12px 12px,60px 60px,60px 60px;overflow-x:auto;padding:6px}
+.canvas svg{display:block;width:100%;height:auto;min-width:420px;color:var(--ink)}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:.94rem}
+.side h3{font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:.86rem;font-weight:700;color:var(--muted);margin:0 0 4px}
+.side .block+.block{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.marking{font-family:'STIX Two Text',Cambria,Georgia,serif;font-size:1.08rem;word-break:break-word}
+.seq{font-family:'STIX Two Text',Cambria,Georgia,serif;word-break:break-word}
+.muted{color:var(--muted)}
+.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.86rem;font-weight:700;margin:2px 4px 2px 0}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.neu{background:var(--grid);color:var(--ink)}
+
+/* net svg */
+.net .arc{fill:none;stroke:var(--ink);stroke-width:1.6}
+.net .place circle.body{fill:var(--canvas);stroke:var(--ink);stroke-width:2}
+.net .place.sel circle.body{stroke:var(--sel);stroke-width:3.5;fill:var(--sel-fill)}
+.net .place.clickable{cursor:pointer}
+.net .tok{fill:var(--token)}
+.net .toktxt{fill:var(--token);font:700 15px 'Atkinson Hyperlegible',sans-serif;text-anchor:middle;dominant-baseline:central}
+.net .trans rect.body{fill:var(--canvas);stroke:var(--ink);stroke-width:2}
+.net .trans.en rect.body{fill:var(--en-fill);stroke:var(--en);stroke-width:3}
+.net .trans.clickable{cursor:pointer}
+.net .trans.sel rect.body{stroke:var(--sel);stroke-width:3.5;fill:var(--sel-fill)}
+.net .lbl{fill:var(--ink);font:italic 15px 'STIX Two Text',Cambria,Georgia,serif}
+.net .wlbl{fill:var(--ink);font:700 12px 'Atkinson Hyperlegible',sans-serif;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--canvas);stroke-width:4}
+.net g[role="button"]:focus{outline:none}
+.net g[role="button"]:focus-visible rect.body,.net g[role="button"]:focus-visible circle.body{stroke:var(--sel);stroke-width:4}
+.flash rect.body{animation:flash .45s ease-out}
+@keyframes flash{0%{fill:var(--en)}100%{fill:var(--canvas)}}
+
+/* graph svg */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px}
+.panel > h3{font-family:'Newsreader',Georgia,serif;font-size:1.2rem;margin:0 0 4px}
+.panel > p{margin:0 0 8px;max-width:75ch}
+.graphwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--canvas)}
+.graphwrap svg{display:block;height:auto;color:var(--ink);margin:0 auto}
+.g-edge{fill:none;stroke:var(--muted);stroke-width:1.3}
+.g-elbl{fill:var(--ink);font:italic 12.5px 'STIX Two Text',Cambria,Georgia,serif;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--canvas);stroke-width:4}
+.g-node rect{fill:var(--panel);stroke:var(--ink);stroke-width:1.3}
+.g-node text{fill:var(--ink);font:12.5px 'STIX Two Text',Cambria,Georgia,serif;text-anchor:middle;dominant-baseline:central}
+.g-node.cur rect{fill:var(--sel-fill);stroke:var(--sel);stroke-width:2.6}
+.g-node.m0 rect{stroke-width:2.6}
+.g-node.dead rect{stroke:var(--bad);stroke-dasharray:4 3}
+.g-node.omega rect{stroke:var(--token);stroke-width:2}
+.g-node.clickable{cursor:pointer}
+.g-node.clickable:hover rect{stroke:var(--sel)}
+
+table.tbl{border-collapse:collapse;font-size:.93rem;margin:6px 0}
+.tbl th,.tbl td{border:1px solid var(--line);padding:4px 9px;text-align:center}
+.tbl th{background:var(--grid);font-weight:700}
+.tbl td.l,.tbl th.l{text-align:left}
+.tbl .mcol{font-family:'STIX Two Text',Cambria,Georgia,serif;font-style:italic}
+.tblwrap{overflow-x:auto}
+.vecin{width:3.2em;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:var(--canvas);color:var(--ink);font:inherit;text-align:center}
+.setlist{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.setbtn{border:1px solid var(--line);background:var(--canvas);border-radius:6px;padding:3px 9px;cursor:pointer;font-family:'STIX Two Text',Cambria,Georgia,serif}
+.setbtn:hover{border-color:var(--sel)}
+.result{margin-top:6px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+
+/* formal */
+.formal{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 20px 16px}
+.def{padding:12px 0;border-bottom:1px solid var(--line);max-width:78ch}
+.def:last-child{border-bottom:0}
+.def .dn{font-weight:700;display:block;margin-bottom:2px}
+.def .star{color:var(--en);font-weight:700}
+.def .proof{color:var(--muted);margin-top:4px}
+.def .proof b{color:var(--ink)}
+.def ol,.def ul{margin:4px 0 0;padding-left:1.3em}
+details.formal-toggle > summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px}
+details.formal-toggle > summary::-webkit-details-marker{display:none}
+details.formal-toggle > summary h2{display:inline}
+details.formal-toggle > summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin-top:-4px;transition:transform .2s}
+details.formal-toggle[open] > summary::after{transform:rotate(225deg);margin-top:4px}
+details.formal-toggle > .formal{margin-top:12px}
+
+/* quiz */
+.q{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.q-text{font-weight:700;margin:0 0 10px;max-width:75ch}
+.opts{display:grid;gap:7px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--canvas);border-radius:8px;padding:9px 12px;cursor:pointer;line-height:1.4}
+.opt:hover:not(:disabled){border-color:var(--sel)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.expl{margin:10px 0 0;padding-left:12px;border-left:3px solid var(--line);max-width:75ch}
+.expl.ok{border-color:var(--ok)}
+.expl.bad{border-color:var(--bad)}
+.q-foot{display:flex;gap:10px;align-items:center;margin-top:8px}
+.nav-next{display:flex;justify-content:space-between;gap:10px;margin-top:30px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:18px 16px 10px}
+  .brand-sub{margin-bottom:12px}
+  .lessons{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
+  .lesson-btn{grid-template-columns:22px auto 14px;white-space:nowrap}
+  .lesson-kap{display:none}
+  .rail-foot{margin-top:8px}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  main{padding-top:22px}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Lektionen">
+    <p class="brand">Petri-Netze lernen</p>
+    <p class="brand-sub">Stoff der mündlichen Prüfung, SoSe 2026, in der Reihenfolge, in der er aufeinander aufbaut.</p>
+    <ol class="lessons" id="lessons"></ol>
+    <div class="rail-foot">
+      <span id="progtxt">0 von 7 Lektionen abgeschlossen</span>
+      <div class="progressbar"><span id="progbar"></span></div>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ---------- Netze ---------- */
+const NETS = {
+  ev: { name:'Erzeugen & Verbrauchen', type:'ENS',
+    places:[{id:'p1',x:100,y:55,lp:'t'},{id:'p2',x:100,y:245,lp:'b'},{id:'buffer',x:260,y:150,lp:'b'},{id:'c1',x:420,y:245,lp:'b'},{id:'c2',x:420,y:55,lp:'t'}],
+    transitions:[{id:'produce',x:45,y:150,lp:'l'},{id:'put',x:155,y:150,lp:'b'},{id:'take',x:365,y:150,lp:'b'},{id:'consume',x:475,y:150,lp:'r'}],
+    arcs:[['p1','produce'],['produce','p2'],['p2','put'],['put','p1'],['put','buffer'],['buffer','take'],['c2','take'],['take','c1'],['c1','consume'],['consume','c2']],
+    m0:{p1:1,buffer:1,c2:1} },
+  rel: { name:'Beziehungen', type:'ENS',
+    places:[{id:'a',x:60,y:140,lp:'l'},{id:'b',x:250,y:60,lp:'t'},{id:'c',x:440,y:60,lp:'t'},{id:'d',x:250,y:220,lp:'b'},{id:'e',x:250,y:310,lp:'b'},{id:'f',x:440,y:310,lp:'b'}],
+    transitions:[{id:'t1',x:155,y:60,lp:'t'},{id:'t2',x:345,y:60,lp:'t'},{id:'t3',x:155,y:220,lp:'b'},{id:'t4',x:345,y:310,lp:'b'}],
+    arcs:[['a','t1'],['t1','b'],['b','t2'],['t2','c'],['a','t3'],['t3','d'],['e','t4'],['t4','f']],
+    m0:{a:1,e:1} },
+  dfree: { name:'Deadlockfrei, nicht lebendig', type:'ENS',
+    places:[{id:'s1',x:60,y:150,lp:'b'},{id:'s2',x:250,y:150,lp:'b'},{id:'s3',x:430,y:150,lp:'b'}],
+    transitions:[{id:'t1',x:150,y:150,lp:'b'},{id:'t2',x:340,y:80,lp:'t'},{id:'t3',x:340,y:220,lp:'b'}],
+    arcs:[['s1','t1'],['t1','s2'],['s2','t2'],['t2','s3'],['s3','t3'],['t3','s2']],
+    m0:{s1:1} },
+  dead: { name:'Mit Deadlock', type:'ENS',
+    places:[{id:'s1',x:80,y:150,lp:'l'},{id:'s2',x:330,y:70,lp:'r'},{id:'s3',x:330,y:240,lp:'r'}],
+    transitions:[{id:'t1',x:205,y:40,lp:'t'},{id:'t3',x:205,y:130,lp:'b'},{id:'t2',x:205,y:240,lp:'b'}],
+    arcs:[['s1','t1'],['t1','s2'],['s2','t3'],['t3','s1'],['s1','t2'],['t2','s3']],
+    m0:{s1:1} },
+  res: { name:'Ressourcen-Teilung', type:'STS',
+    places:[{id:'Idle1',x:60,y:60,lp:'t'},{id:'Working1',x:320,y:60,lp:'t'},{id:'Res',x:180,y:190,lp:'l'},{id:'Idle2',x:60,y:320,lp:'b'},{id:'Working2',x:320,y:320,lp:'b'}],
+    transitions:[{id:'take1',x:150,y:30,lp:'t'},{id:'put1',x:235,y:115,lp:'r'},{id:'take2',x:150,y:350,lp:'b'},{id:'put2',x:235,y:265,lp:'r'}],
+    arcs:[['Idle1','take1'],['Res','take1',2],['take1','Working1'],['Working1','put1'],['put1','Idle1'],['put1','Res',2],
+          ['Idle2','take2'],['Res','take2',3],['take2','Working2'],['Working2','put2'],['put2','Idle2'],['put2','Res',3]],
+    m0:{Res:4,Idle1:1,Idle2:1} },
+  unb: { name:'Unbeschränkt (Abb. 8.1)', type:'STS',
+    places:[{id:'s1',x:90,y:90,lp:'t'},{id:'s2',x:220,y:230,lp:'b'},{id:'s3',x:350,y:90,lp:'t'},{id:'s4',x:480,y:230,lp:'b'}],
+    transitions:[{id:'t1',x:90,y:230,lp:'b'},{id:'t2',x:220,y:90,lp:'t'},{id:'t3',x:350,y:230,lp:'b'}],
+    arcs:[['s1','t1'],['t1','s1'],['t1','s2'],['s1','t2'],['t2','s3'],['s3','t3'],['t3','s3'],['t3','s4']],
+    m0:{s1:1} },
+  trap1: { name:'Deadlockfrei', type:'STS',
+    places:[{id:'s1',x:80,y:80,lp:'l'},{id:'s2',x:80,y:220,lp:'l'},{id:'s3',x:340,y:150,lp:'r'},{id:'s4',x:210,y:380,lp:'b'}],
+    transitions:[{id:'t1',x:210,y:150,lp:'b'},{id:'t2',x:210,y:30,lp:'t'},{id:'t3',x:210,y:280,lp:'r'},{id:'t4',x:80,y:330,lp:'l'}],
+    arcs:[['s1','t1'],['s2','t1'],['t1','s3'],['s3','t2'],['t2','s1'],['t2','s2'],['s2','t3'],['t3','s4'],['s4','t4'],['t4','s2']],
+    m0:{s1:1,s2:1} },
+  trap2: { name:'Mit Deadlock', type:'STS',
+    places:[{id:'s1',x:80,y:150,lp:'l'},{id:'s2',x:330,y:70,lp:'r'},{id:'s3',x:330,y:240,lp:'r'}],
+    transitions:[{id:'t1',x:205,y:40,lp:'t'},{id:'t3',x:205,y:130,lp:'b'},{id:'t2',x:205,y:240,lp:'b'}],
+    arcs:[['s1','t1'],['t1','s2'],['s2','t3'],['t3','s1'],['s1','t2'],['t2','s3']],
+    m0:{s1:1} }
+};
+
+/* ---------- Lektionen ---------- */
+const LESSONS = [
+{ id:'grund', title:'Netze und Schalten', kap:'Kap. 2, Teil 2 der Prüfung',
+  idea:`Ein Netz ist ein Graph mit zwei Knotensorten: <b>Stellen</b> (Kreise) für Bedingungen und <b>Transitionen</b> (Rechtecke) für Ereignisse. In einem elementaren Netzsystem trägt jede Stelle höchstens eine Marke, und die Menge der markierten Stellen ist der Zustand. Eine Transition schaltet, indem sie ihre Vorstellen leert und ihre Nachstellen markiert.`,
+  tryIt:`Klick auf eine gelb umrandete Transition, um sie zu schalten. Rechts siehst du die Markierung und die Schaltfolge. Unten wächst der Erreichbarkeitsgraph mit; ein Klick auf einen Knoten springt direkt in diesen Zustand.`,
+  examples:['ev'], modes:['fire'], panels:['graph'],
+  formal:`
+<div class="def"><span class="dn">Netz <span class="star">*</span> (Def. 2.1)</span><span class="m">N = (S, T, F)</span> mit endlichen Mengen <span class="m">S</span> (Stellen) und <span class="m">T</span> (Transitionen), <span class="m">S ∩ T = ∅</span>, und Flussrelation <span class="m">F ⊆ (S × T) ∪ (T × S)</span>.</div>
+<div class="def"><span class="dn">Vor- und Nachbereich (Def. 2.2)</span><span class="m">•x = {y | (y, x) ∈ F}</span> und <span class="m">x• = {y | (x, y) ∈ F}</span>.</div>
+<div class="def"><span class="dn">Elementares Netzsystem <span class="star">*</span> (Def. 2.3, 2.4)</span><span class="m">ENS = (S, T, F, M₀)</span> mit einem Netz <span class="m">(S, T, F)</span> und Anfangsmarkierung <span class="m">M₀ ⊆ S</span>.</div>
+<div class="def"><span class="dn">Aktivierte Transition <span class="star">*</span> (Def. 2.5)</span><span class="m">M[t⟩</span> genau dann, wenn <span class="m">•t ⊆ M</span> und <span class="m">t• ∩ M = ∅</span>.</div>
+<div class="def"><span class="dn">Schalten <span class="star">*</span> (Def. 2.6)</span><span class="m">M[t⟩M′</span> genau dann, wenn <span class="m">M′ = (M \\ •t) ∪ t•</span>. Die Folgemarkierung ist eindeutig (Beob. 2.8).</div>
+<div class="def"><span class="dn">Schaltfolge <span class="star">*</span> (Def. 2.7)</span>Induktiv: <span class="m">M[ε⟩M</span>; aus <span class="m">M[w⟩M′</span> und <span class="m">M′[t⟩M″</span> folgt <span class="m">M[wt⟩M″</span>. Dazu <span class="m">FS(ENS) = {w ∈ T* | ∃M: M₀[w⟩M}</span>.</div>
+<div class="def"><span class="dn">Erreichbarkeit und Erreichbarkeitsgraph <span class="star">*</span> (Def. 2.9, 2.10)</span><span class="m">Reach(M₀) = {M′ | M₀[∗⟩M′}</span>. <span class="m">G(ENS) = (V, E)</span> mit <span class="m">V = Reach(M₀)</span> und <span class="m">E = {(M, t, M′) | M[t⟩M′}</span>.</div>
+<div class="def"><span class="dn">G(ENS) ist endlich, kann aber exponentiell groß sein <span class="star">*</span></span><span class="m">Reach ⊆ 2^S</span>, also höchstens <span class="m">2^|S|</span> Knoten. Beispiel: <span class="m">n</span> unabhängige Transitionen liefern <span class="m">2ⁿ</span> erreichbare Markierungen.</div>
+<div class="def"><span class="dn">Induzierter Automat (Def. 2.12, Satz 2.14)</span><span class="m">A(ENS) = (Reach, T, Δ, M₀, Reach)</span> mit <span class="m">(M, t, M′) ∈ Δ ⟺ M[t⟩M′</span>. Es gilt <span class="m">L(A(ENS)) = FS(ENS)</span>.<div class="proof"><b>Beweisidee:</b> Induktion über <span class="m">w</span> zeigt <span class="m">(M₀, w, M) ∈ Δ* ⟺ M₀[w⟩M</span> (Lemma 2.13). Da alle Zustände Endzustände sind, folgt die Gleichheit.</div></div>
+<div class="def"><span class="dn">Äquivalente ENS <span class="star">*</span> (Def. 2.17)</span><span class="m">ENS₁ ≈ ENS₂</span>, falls es Bijektionen <span class="m">g: Reach₁ → Reach₂</span> und <span class="m">h: USE₁ → USE₂</span> gibt mit <span class="m">g(M₀₁) = M₀₂</span> und <span class="m">M[t⟩M′ ⟺ g(M)[h(t)⟩g(M′)</span>. Also isomorphe Erreichbarkeitsgraphen. Äquivalenz impliziert FS-Äquivalenz, nicht umgekehrt. Reduziertes ENS: nutzlose Transitionen und dann isolierte Stellen entfernen, <span class="m">red(ENS) ≈ ENS</span>.</div>`,
+  quiz:[
+    {q:'Wann ist eine Transition t bei Markierung M in einem ENS aktiviert?',
+     o:['•t ⊆ M und t• ∩ M = ∅','•t ⊆ M','•t ∩ M ≠ ∅ und t• ⊆ M'], c:0,
+     e:'Alle Vorstellen müssen markiert sein und alle Nachstellen leer, denn im ENS darf keine Stelle zwei Marken bekommen.'},
+    {q:'Wie viele Knoten kann G(ENS) höchstens haben?',
+     o:['|S|','2^|S|','|S| · |T|','Unendlich viele'], c:1,
+     e:'Jede erreichbare Markierung ist eine Teilmenge von S, also gibt es höchstens 2^|S| davon.'},
+    {q:'Warum ist put bei M₀ = {p1, buffer, c2} nicht aktiviert?',
+     o:['Die Vorstelle p2 ist leer, und die Nachstellen p1 und buffer sind schon markiert','Weil take zuerst schalten muss','Weil produce und put in Konflikt stehen'], c:0,
+     e:'Beide Bedingungen sind verletzt: •put = {p2} ⊄ M₀ und put• = {p1, buffer} überschneidet sich mit M₀.'}
+  ]},
+{ id:'neben', title:'Abhängigkeit und Nebenläufigkeit', kap:'Kap. 3',
+  idea:`Zwei Transitionen können <b>kausal abhängig</b> sein (die eine liefert die Marke für die andere), in <b>Konflikt</b> stehen (das Schalten der einen deaktiviert die andere) oder <b>unabhängig</b> sein. Unabhängige, aktivierte Transitionen können gleichzeitig schalten: das ist die Parallelschaltung.`,
+  tryIt:`Wechsle in den Modus „Vergleichen“ und wähle zwei Transitionen aus: Rechts steht, in welcher Beziehung sie stehen. Wählst du eine Menge U aus, prüft die Seite, ob U bei der aktuellen Markierung parallel schalten darf, zum Beispiel t1 und t4.`,
+  examples:['rel'], modes:['fire','selT'], panels:['rel'],
+  formal:`
+<div class="def"><span class="dn">Kausale Abhängigkeit <span class="star">*</span> (Kap. 3.1)</span><span class="m">t₁• ∩ •t₂ ≠ ∅</span>: <span class="m">t₂</span> kann erst schalten, nachdem <span class="m">t₁</span> geschaltet hat.</div>
+<div class="def"><span class="dn">Konflikt <span class="star">*</span> (Kap. 3.2)</span><span class="m">•t₁ ∩ •t₂ ≠ ∅</span> oder <span class="m">t₁• ∩ t₂• ≠ ∅</span>: Beide können aktiviert sein, aber das Schalten der einen deaktiviert die andere.</div>
+<div class="def"><span class="dn">Unabhängigkeit <span class="star">*</span> (Def. 3.1)</span><span class="m">U ⊆ T</span> ist unabhängig, falls <span class="m">(•t₁ ∪ t₁•) ∩ (•t₂ ∪ t₂•) = ∅</span> für alle <span class="m">t₁ ≠ t₂</span> in <span class="m">U</span>. Beob. 3.2: Schalten alle Permutationen von <span class="m">U</span> von <span class="m">M</span> nach <span class="m">M′</span>, dann ist <span class="m">U</span> unabhängig.</div>
+<div class="def"><span class="dn">Parallelschaltung <span class="star">*</span> (Def. 3.3)</span><span class="m">M[U⟩M′</span>, falls <span class="m">U</span> unabhängig, <span class="m">•U ⊆ M</span>, <span class="m">U• ∩ M = ∅</span> und <span class="m">M′ = (M \\ •U) ∪ U•</span>.</div>
+<div class="def"><span class="dn">Sequentialisierungssatz <span class="star">*</span> (Satz 3.4)</span>Für <span class="m">U = U₁ ∪ U₂</span> mit <span class="m">U₁ ∩ U₂ = ∅</span> gilt: <span class="m">M[U⟩M′ ⟹ M[U₁⟩M₁[U₂⟩M′</span> mit <span class="m">M₁ = (M \\ •U₁) ∪ U₁•</span>.
+<div class="proof"><b>Beweisskizze:</b><ol><li>Als Teilmengen von <span class="m">U</span> sind <span class="m">U₁, U₂</span> unabhängig.</li><li><span class="m">U₁</span> ist <span class="m">M</span>-aktiviert: <span class="m">•U₁ ⊆ •U ⊆ M</span> und <span class="m">U₁• ∩ M ⊆ U• ∩ M = ∅</span>.</li><li><span class="m">U₂</span> ist <span class="m">M₁</span>-aktiviert: Wegen der Unabhängigkeit berühren sich die Bereiche von <span class="m">U₁</span> und <span class="m">U₂</span> nicht, also ändert <span class="m">U₁</span> nichts an <span class="m">•U₂</span> und <span class="m">U₂•</span>.</li><li>Nachrechnen: <span class="m">(M₁ \\ •U₂) ∪ U₂• = (M \\ •U) ∪ U• = M′</span>.</li></ol></div></div>
+<div class="def"><span class="dn">Wartegrad und shift (Def. 3.6, 3.7)</span><span class="m">WG(M[U₁ ⋯ Uₙ⟩M′) = Σⱼ |Uⱼ| · (j − 1)</span>. shift verschiebt ein nichtleeres <span class="m">U ⊆ Uⱼ</span> nach <span class="m">Uⱼ₋₁</span>, falls <span class="m">Uⱼ₋₁ ∪ U</span> unabhängig ist. Shiften verkleinert den Wartegrad, terminiert also.</div>
+<div class="def"><span class="dn">Kanonische Schaltfolgen (Def. 3.10, Satz 3.13, 3.16)</span>Kanonisch heißt: kein shift mehr anwendbar. Shiften ist konfluent, also ist die kanonische Form eindeutig. Zwei Schaltfolgen sind genau dann nebenläufig äquivalent, wenn ihre kanonischen Schaltfolgen gleich sind; das ist entscheidbar.</div>`,
+  quiz:[
+    {q:'Es gilt t₁• ∩ •t₂ ≠ ∅. Welche Beziehung liegt vor?',
+     o:['Konflikt','Kausale Abhängigkeit','Unabhängigkeit'], c:1,
+     e:'t₁ legt eine Marke in eine Vorstelle von t₂, also hängt t₂ kausal von t₁ ab.'},
+    {q:'Zwei Transitionen teilen sich nur eine Nachstelle. Was gilt im ENS?',
+     o:['Sie sind unabhängig','Sie stehen in Konflikt','Sie sind kausal abhängig'], c:1,
+     e:'Nach dem Schalten der einen ist die gemeinsame Nachstelle markiert, damit ist die andere deaktiviert.'},
+    {q:'Was sagt der Sequentialisierungssatz?',
+     o:['Aus M[U⟩M′ folgt M[U₁⟩M₁[U₂⟩M′ für jede disjunkte Zerlegung U = U₁ ∪ U₂','Aus M[U₁⟩M₁[U₂⟩M′ folgt immer M[U₁ ∪ U₂⟩M′','Parallelschaltung ist nur für |U| = 2 definiert'], c:0,
+     e:'Eine Parallelschaltung lässt sich beliebig aufteilen. Die Umkehrung ist der Parallelisierungssatz und braucht zusätzlich, dass U₁ ∪ U₂ unabhängig ist.'}
+  ]},
+{ id:'leben', title:'Lebendigkeit und Deadlocks', kap:'Kap. 5 und 9',
+  idea:`Ein <b>Deadlock</b> ist eine erreichbare Markierung, bei der nichts mehr schalten kann. <b>Lebendig</b> ist eine Transition, wenn sie von jeder erreichbaren Markierung aus irgendwann wieder schalten kann. Lebendigkeit ist also stärker als Deadlockfreiheit.`,
+  tryIt:`Vergleiche die drei Beispiele. Die Analyse rechts unten berechnet für jede Transition, ob sie lebendig ist, und markiert Deadlocks im Graphen gestrichelt. Beim ersten Netz siehst du: Nach t1 läuft das System ewig weiter, aber t1 kommt nie wieder.`,
+  examples:['dfree','dead','ev'], modes:['fire'], panels:['graph','live'],
+  formal:`
+<div class="def"><span class="dn">Lebendigkeit <span class="star">*</span> (Def. 5.2, 9.5)</span><span class="m">t</span> ist lebendig, falls es für jedes <span class="m">M ∈ Reach</span> ein <span class="m">w ∈ T*</span> gibt mit <span class="m">M[wt⟩</span>. Das System ist lebendig, falls jede Transition lebendig ist.</div>
+<div class="def"><span class="dn">Deadlockfreiheit <span class="star">*</span> (Def. 5.7, 9.8)</span>Bei jeder erreichbaren Markierung ist mindestens eine Transition aktiviert.</div>
+<div class="def"><span class="dn">Zusammenhang (Beob. 5.8, 9.9)</span>Jedes lebendige System mit <span class="m">T ≠ ∅</span> ist deadlockfrei. Es gibt Systeme, die weder lebendig noch deadlockfrei sind, und solche, die deadlockfrei, aber nicht lebendig sind.</div>
+<div class="def"><span class="dn">Entscheidbarkeit beim ENS <span class="star">*</span> (Satz 5.1, 5.6, 5.9)</span>Alle drei Probleme laufen auf dem endlichen Graphen <span class="m">G(ENS)</span>:<ul><li>Erreichbarkeit: <span class="m">G</span> konstruieren und prüfen, ob <span class="m">M</span> ein Knoten ist.</li><li>Lebendigkeit: Für jeden Knoten <span class="m">M</span> die Menge <span class="m">R(M)</span> als Fixpunkt berechnen; <span class="m">NT(M)</span> = Transitionen auf Kanten in <span class="m">R(M)</span>. Lebendig genau dann, wenn <span class="m">NT(M) = T</span> für alle <span class="m">M</span> (Beob. 5.5).</li><li>Deadlockfreiheit: Jeder Knoten hat eine ausgehende Kante.</li></ul></div>
+<div class="def"><span class="dn">Entscheidbarkeit beim STS <span class="star">*</span> (Kap. 9)</span>Erreichbarkeit ist entscheidbar (Satz 9.1), aber EXPSPACE-hart. <span class="m">NEP ≤ₚ EP</span> trivial und <span class="m">EP ≤ₚ NEP</span> per Konstruktion mit neuer Stelle <span class="m">run</span> (Schlinge an jedes <span class="m">t</span>) und Transition <span class="m">clear</span>, die <span class="m">M(s)</span> Marken aus jedem <span class="m">s</span> und die Marke aus <span class="m">run</span> nimmt. <span class="m">LP ≤ EP</span>, also ist auch Lebendigkeit entscheidbar (Satz 9.7).</div>`,
+  quiz:[
+    {q:'Welche Aussage ist richtig?',
+     o:['Deadlockfrei impliziert lebendig','Lebendig (mit T ≠ ∅) impliziert deadlockfrei','Beide Begriffe sind äquivalent'], c:1,
+     e:'Wenn jede Transition immer wieder schalten kann, gibt es nie einen Zustand ohne aktivierte Transition. Umgekehrt zeigt das erste Beispiel ein deadlockfreies, nicht lebendiges Netz.'},
+    {q:'Wie erkennst du einen Deadlock im Erreichbarkeitsgraphen?',
+     o:['Ein Knoten ohne ausgehende Kante','Ein Knoten ohne eingehende Kante','Ein Zyklus im Graphen'], c:0,
+     e:'Ohne ausgehende Kante ist bei dieser Markierung keine Transition aktiviert.'},
+    {q:'Warum ist das Erreichbarkeitsproblem beim STS schwieriger als beim ENS?',
+     o:['Weil Transitionen Gewichte haben','Weil der Erreichbarkeitsgraph unendlich sein kann','Weil es beim STS keine Schaltfolgen gibt'], c:1,
+     e:'Beim ENS ist G immer endlich. Beim unbeschränkten STS kann man G nicht vollständig aufbauen; Erreichbarkeit bleibt entscheidbar, ist aber EXPSPACE-hart.'}
+  ]},
+{ id:'sts', title:'S/T-Systeme', kap:'Kap. 6',
+  idea:`Ein S/T-System ist ein Netz, in dem Stellen <b>beliebig viele Marken</b> tragen dürfen und jede Kante ein <b>Gewicht</b> hat. Eine Transition nimmt so viele Marken aus jeder Vorstelle, wie das Gewicht angibt, und legt entsprechend viele in die Nachstellen. Der Zustand ist jetzt eine Abbildung <span class="m">M: S → ℕ</span>.`,
+  tryIt:`take1 braucht zwei Marken aus Res, take2 braucht drei. Probier aus, ob beide Arbeiter gleichzeitig arbeiten können, und schau dir im Graphen an, warum nicht. Rechts steht nach jedem Schritt der Änderungsvektor Δt.`,
+  examples:['res'], modes:['fire'], panels:['graph'],
+  formal:`
+<div class="def"><span class="dn">S/T-System <span class="star">*</span> (Def. 6.1)</span><span class="m">STS = (S, T, F, W, M₀)</span> mit Netz <span class="m">(S, T, F)</span>, Gewichten <span class="m">W: F → ℕ₍>0₎</span> und Anfangsmarkierung <span class="m">M₀: S → ℕ</span>. Anders als beim ENS sind Schlingen und Transitionen ohne Vor- oder Nachbereich erlaubt.</div>
+<div class="def"><span class="dn">Aktiviert <span class="star">*</span> (Def. 6.3)</span><span class="m">M[t⟩</span>, falls <span class="m">M(s) ≥ W(s, t)</span> für alle <span class="m">s ∈ •t</span>.</div>
+<div class="def"><span class="dn">Schalten <span class="star">*</span> (Def. 6.4, 6.5)</span>Mit der erweiterten Gewichtsfunktion <span class="m">W₀</span> (0 außerhalb von <span class="m">F</span>) und <span class="m">Δt(s) = −W₀(s, t) + W₀(t, s)</span> gilt <span class="m">M′ = M + Δt</span>. Ausführlich: <span class="m">M(s) − W(s,t)</span> für <span class="m">s ∈ •t \\ t•</span>, <span class="m">M(s) + W(t,s)</span> für <span class="m">s ∈ t• \\ •t</span>, <span class="m">M(s) − W(s,t) + W(t,s)</span> für <span class="m">s ∈ •t ∩ t•</span>.</div>
+<div class="def"><span class="dn">Schaltfolge, Erreichbarkeitsgraph <span class="star">*</span> (Def. 6.7–6.10)</span>Wie beim ENS. Mit <span class="m">Δw</span> induktiv fortgesetzt gilt <span class="m">M[w⟩M′ ⟹ M′ = M + Δw</span>. <span class="m">G(STS)</span> ist zusammenhängend, jeder Knoten hat höchstens <span class="m">|T|</span> ein- und ausgehende Kanten, und <span class="m">G</span> kann unendlich sein.</div>
+<div class="def"><span class="dn">Parallelschaltung (Def. 6.12, Satz 6.13)</span>Mit Multimengen <span class="m">U: T → ℕ</span>: <span class="m">U</span> aktiviert, falls <span class="m">M(s) ≥ Σₜ U(t) · W₀(s, t)</span>, dann <span class="m">M′ = M + Σₜ U(t) · Δt</span>. Der Sequentialisierungssatz gilt analog (Beweis nicht prüfungsrelevant).</div>`,
+  quiz:[
+    {q:'Wann ist t in einem S/T-System bei M aktiviert?',
+     o:['M(s) ≥ W(s, t) für alle s ∈ •t','M(s) ≥ 1 für alle s ∈ •t und M(s) = 0 für alle s ∈ t•','M(s) = W(s, t) für alle s ∈ •t'], c:0,
+     e:'Jede Vorstelle braucht mindestens so viele Marken, wie die Kante wegnimmt. Nachstellen haben beim STS keine Kapazitätsgrenze.'},
+    {q:'Res hat 4 Marken, take2 nimmt 3. Wie viele Marken liegen danach in Res?',
+     o:['0','1','3'], c:1,
+     e:'Δtake2(Res) = −3, also 4 − 3 = 1. Damit reicht es nicht mehr für take1, das 2 Marken braucht.'},
+    {q:'Was ist beim STS erlaubt, beim ENS aber nicht?',
+     o:['Eine Stelle, die Vor- und Nachstelle derselben Transition ist','Kanten zwischen zwei Stellen','Unendlich viele Transitionen'], c:0,
+     e:'Schlingen sind beim STS erlaubt. Kanten zwischen gleichen Knotensorten und unendliche Mengen gibt es in keinem der beiden Modelle.'}
+  ]},
+{ id:'beschr', title:'Beschränktheit und Überdeckungsgraph', kap:'Kap. 7 und 8',
+  idea:`Ein S/T-System ist <b>beschränkt</b>, wenn in keiner Stelle beliebig viele Marken auftauchen können, genau dann ist der Erreichbarkeitsgraph endlich. Unbeschränktheit erkennt man an einer erreichbaren Markierung, von der aus man eine echt größere erreicht. Der <b>Überdeckungsgraph</b> fasst das Wachsen mit dem Symbol ω zusammen und ist immer endlich.`,
+  tryIt:`Schalte t1 mehrmals: s2 wächst ohne Grenze. Der Überdeckungsgraph unten markiert genau die unbeschränkten Stellen mit ω. Im Ressourcen-Beispiel gibt es zum Vergleich kein einziges ω.`,
+  examples:['unb','res'], modes:['fire'], panels:['cover','graph'],
+  formal:`
+<div class="def"><span class="dn">Beschränktheit <span class="star">*</span> (Def. 7.1)</span><span class="m">s</span> ist <span class="m">k</span>-beschränkt, falls <span class="m">M(s) ≤ k</span> für alle <span class="m">M ∈ Reach(M₀)</span>. Das System ist beschränkt, falls jede Stelle beschränkt ist.</div>
+<div class="def"><span class="dn">Beschränkt genau dann, wenn G(STS) endlich <span class="star">*</span> (Beob. 7.2)</span><div class="proof"><b>Beweis:</b> <span class="m">k</span>-beschränkt ergibt höchstens <span class="m">(k+1)^|S|</span> Markierungen mit je höchstens <span class="m">|T|</span> Kanten. Umgekehrt hat ein endlicher Graph ein Maximum pro Stelle.</div></div>
+<div class="def"><span class="dn">Charakterisierung der Unbeschränktheit</span>Mit <span class="m">M < M′</span> (überall ≤, irgendwo &lt;): STS ist unbeschränkt genau dann, wenn <span class="m">M₀[∗⟩M[∗⟩M′</span> mit <span class="m">M < M′</span>.
+<div class="proof"><b>⇐ (Beob. 7.4):</b> Aus <span class="m">M[q⟩M′</span> folgt <span class="m">Δq ≥ 0</span> und <span class="m">(M + M̂)[q⟩(M′ + M̂)</span>. Also <span class="m">q</span> beliebig oft pumpen.<br><b>⇒ (Beob. 7.6):</b> <span class="m">G</span> ist unendlich mit endlichem Ausgangsgrad, also gibt es einen unendlichen einfachen Weg <span class="m">M₀, M₁, …</span>. Jede unendliche Folge in <span class="m">ℕ</span> hat eine unendliche monoton wachsende Teilfolge (Beob. 7.5). Stelle für Stelle ausdünnen liefert <span class="m">i &lt; j</span> mit <span class="m">Mᵢ ≤ Mⱼ</span>, und weil der Weg einfach ist, <span class="m">Mᵢ &lt; Mⱼ</span>.</div></div>
+<div class="def"><span class="dn">Entscheidbarkeit der Beschränktheit <span class="star">*</span> (Satz 7.7)</span>Graph von <span class="m">M₀</span> aus aufbauen. Für jede neue Markierung <span class="m">M′</span> rückwärts bis <span class="m">M₀</span> laufen. Trifft man <span class="m">M″ < M′</span>, ist das System unbeschränkt. Wegen 7.6 und 7.2 terminiert das Verfahren.</div>
+<div class="def"><span class="dn">Überdeckungsgraph (Kap. 8.1)</span>ω-Markierungen <span class="m">M: S → ℕ ∪ {ω}</span> mit <span class="m">ω ± n = ω</span>. Konstruktion:<ol><li>Start mit Knoten <span class="m">M₀</span>.</li><li>Für jeden unbehandelten Knoten <span class="m">M</span> und jedes <span class="m">t</span> mit <span class="m">M[t⟩M′</span>: Liegt auf dem Weg von <span class="m">M₀</span> nach <span class="m">M</span> ein <span class="m">M̂ ≤ M′</span>, setze <span class="m">M′(s) = ω</span> überall, wo <span class="m">M̂(s) &lt; M′(s)</span>.</li><li><span class="m">M′</span> als Knoten (falls neu) und Kante <span class="m">(M, t, M′)</span> einfügen.</li></ol>Die Konstruktion ist nicht eindeutig.</div>
+<div class="def"><span class="dn">Ergebnisse (Satz 8.2, 8.5, Beob. 8.7, Satz 8.8)</span>Jeder Überdeckungsgraph ist endlich. Eine Stelle ist unbeschränkt genau dann, wenn ein Knoten dort ω hat. <span class="m">M</span> heißt überdeckbar, wenn <span class="m">M ≤ M′</span> für ein erreichbares <span class="m">M′</span>; das gilt genau dann, wenn ein Knoten <span class="m">M̂ ≥ M</span> im Überdeckungsgraphen existiert. Damit ist Überdeckbarkeit entscheidbar.</div>`,
+  quiz:[
+    {q:'Es gilt M₀[∗⟩M[∗⟩M′ mit M < M′. Was folgt?',
+     o:['Das System ist unbeschränkt','Das System hat einen Deadlock','Das System ist lebendig'], c:0,
+     e:'Die Schaltfolge von M nach M′ kann beliebig oft wiederholt werden, weil Δq ≥ 0. Dabei wächst mindestens eine Stelle über jede Grenze.'},
+    {q:'Im Überdeckungsgraphen steht bei Stelle s irgendwo ein ω. Was bedeutet das?',
+     o:['s ist unbeschränkt','s ist nie markiert','s ist eine Falle'], c:0,
+     e:'Satz 8.5: s ist genau dann unbeschränkt, wenn ein Knoten des Überdeckungsgraphen dort ω trägt.'},
+    {q:'Warum reicht es nicht, einfach G(STS) aufzubauen, um Beschränktheit zu entscheiden?',
+     o:['Bei unbeschränkten Systemen terminiert der Aufbau nie','G(STS) ist immer unendlich','G(STS) enthält keine Deadlocks'], c:0,
+     e:'Das wäre nur semi-entscheidbar. Satz 7.7 bricht deshalb ab, sobald er eine wachsende Markierung M″ < M′ findet.'}
+  ]},
+{ id:'linalg', title:'Lineare Algebra', kap:'Kap. 10',
+  idea:`Schreibt man alle Änderungsvektoren <span class="m">Δt</span> als Spalten nebeneinander, erhält man die <b>Matrix Δ</b>. Dann gilt die Zustandsgleichung <span class="m">M′ = M + Δ ∘ π(w)</span>, wobei <span class="m">π(w)</span> zählt, wie oft jede Transition in <span class="m">w</span> vorkommt. <b>T-Invarianten</b> sind Schaltvektoren ohne Wirkung, <b>S-Invarianten</b> gewichtete Markensummen, die sich nie ändern.`,
+  tryIt:`Gib einen Vektor x ein und prüfe, ob er eine T-Invariante ist, zum Beispiel take1 = 1 und put1 = 1. Gib dann einen Vektor y ein: Ist er eine S-Invariante, bleibt y ∘ M beim Schalten oben immer gleich. Probier Res = 1, Working1 = 2, Working2 = 3.`,
+  examples:['res','unb'], modes:['fire'], panels:['matrix'],
+  formal:`
+<div class="def"><span class="dn">Matrix (Def. 10.1)</span>Für <span class="m">S = {s₁,…,sₘ}</span>, <span class="m">T = {t₁,…,tₙ}</span> ist <span class="m">Δ</span> die <span class="m">m × n</span>-Matrix mit <span class="m">Δᵢⱼ = Δtⱼ(sᵢ)</span>. <span class="m">π(w)</span> ist der Parikh-Vektor von <span class="m">w</span>.</div>
+<div class="def"><span class="dn">Zustandsgleichung (Beob. 10.3)</span><span class="m">M[w⟩M′ ⟹ M′ᵀ = Mᵀ + Δ ∘ π(w)</span>, per Induktion über <span class="m">w</span>. Folgerung: <span class="m">M[∗⟩M′ ⟹ Δ ∘ x = (M′ − M)ᵀ</span> hat eine Lösung in <span class="m">ℕⁿ</span>. Die Umkehrung gilt nicht.</div>
+<div class="def"><span class="dn">Unbeschränktheit (Satz 10.7)</span>STS unbeschränkt <span class="m">⟹ Δ ∘ x > 0ᵀ</span> hat eine Lösung in <span class="m">ℕⁿ</span>. Umgekehrt: Ist <span class="m">Δ ∘ x > 0ᵀ</span> lösbar, gibt es eine Anfangsmarkierung <span class="m">M</span>, für die das System unbeschränkt ist.
+<div class="proof"><b>Beweisidee:</b> ⇒ Nach 7.6 gibt es <span class="m">M̂[w⟩M</span> mit <span class="m">M̂ &lt; M</span>, also <span class="m">Δ ∘ π(w) = (M − M̂)ᵀ > 0</span>. ⇐ Wähle <span class="m">w</span> mit <span class="m">π(w) = x</span> und <span class="m">M</span> groß genug (Beob. 10.5), dann <span class="m">M[w⟩M′</span> mit <span class="m">M &lt; M′</span>, weiter mit 7.4.</div></div>
+<div class="def"><span class="dn">T-Invarianten (Def. 10.8, Satz 10.9)</span><span class="m">x ∈ ℤⁿ</span> mit <span class="m">Δ ∘ x = 0</span>. Ist <span class="m">π(w)</span> eine T-Invariante und <span class="m">M[w⟩M′</span>, dann <span class="m">M′ = M</span>. Umgekehrt: <span class="m">M[w⟩M ⟹ π(w)</span> ist nicht-negative T-Invariante.</div>
+<div class="def"><span class="dn">Beschränkt und lebendig ⟹ positive T-Invariante (Beob. 10.10)</span><div class="proof"><b>Beweisidee:</b> <span class="m">G</span> ist endlich. Wegen Lebendigkeit gibt es von jedem Knoten einen Weg, auf dem alle Transitionen vorkommen. Hängt man solche Wege aneinander, wiederholt sich irgendwann eine Markierung. Der Zyklus dazwischen enthält alle Transitionen, sein Parikh-Vektor ist die gesuchte Invariante.</div></div>
+<div class="def"><span class="dn">S-Invarianten (Def. 10.11, Satz 10.12)</span><span class="m">y ∈ ℤᵐ</span> mit <span class="m">y ∘ Δ = 0</span>. Dann gilt <span class="m">M[w⟩M′ ⟹ y ∘ Mᵀ = y ∘ M′ᵀ</span>.<div class="proof"><b>Beweis:</b> <span class="m">y ∘ M′ᵀ = y ∘ (Mᵀ + Δ ∘ π(w)) = y ∘ Mᵀ + (y ∘ Δ) ∘ π(w) = y ∘ Mᵀ</span>.</div></div>
+<div class="def"><span class="dn">Positive S-Invariante ⟹ strukturell beschränkt (Beob. 10.13)</span><div class="proof"><b>Beweis:</b> Für jedes erreichbare <span class="m">M</span> gilt <span class="m">Σ M(sᵢ) ≤ y ∘ Mᵀ = y ∘ M₀ᵀ</span>, weil alle <span class="m">yᵢ ≥ 1</span>. Das gilt für jede Anfangsmarkierung.</div></div>
+<div class="def"><span class="dn">Abschluss (Beob. 10.14)</span>Summen und ganzzahlige Vielfache von Invarianten sind wieder Invarianten.</div>`,
+  quiz:[
+    {q:'Wann ist x eine T-Invariante?',
+     o:['Δ ∘ x = 0','x ∘ Δ = 0','Δ ∘ x > 0'], c:0,
+     e:'Eine T-Invariante ist ein Transitionsvektor ohne Nettowirkung. y ∘ Δ = 0 wäre eine S-Invariante, Δ ∘ x > 0 zeigt Unbeschränktheit an.'},
+    {q:'Δ ∘ x = (M′ − M)ᵀ hat eine Lösung in ℕⁿ. Ist M′ dann von M aus erreichbar?',
+     o:['Ja, immer','Nicht unbedingt, die Bedingung ist nur notwendig','Nur wenn x eine T-Invariante ist'], c:1,
+     e:'Die Gleichung ignoriert die Reihenfolge und ob die Transitionen unterwegs überhaupt aktiviert sind.'},
+    {q:'Was folgt aus einer positiven S-Invariante?',
+     o:['Das System ist für jede Anfangsmarkierung beschränkt','Das System ist lebendig','Das System hat einen Deadlock'], c:0,
+     e:'Die gewichtete Markensumme ist konstant, und alle Gewichte sind mindestens 1. Also ist die Gesamtzahl der Marken durch y ∘ M₀ beschränkt.'}
+  ]},
+{ id:'fallen', title:'Fallen und Co-Fallen', kap:'Kap. 11, dein Wahlthema',
+  idea:`Eine <b>Falle</b> ist eine Stellenmenge, die eine einmal gefangene Marke nie mehr ganz verliert. Eine <b>Co-Falle</b> ist eine Stellenmenge, die, einmal leer, nie wieder eine Marke bekommt. Wenn jede Co-Falle eine anfangs markierte Falle enthält, kann das System nie in einen Deadlock laufen.`,
+  tryIt:`Wähle im Modus „Stellen wählen“ eine Menge P aus oder klick auf eine der gefundenen Mengen. Rechts siehst du •P, P• und ob P Falle oder Co-Falle ist. Mit „Marke +“ und „Marke −“ änderst du die Anfangsmarkierung und siehst, wann die Co-Falle/Falle-Eigenschaft kippt.`,
+  examples:['trap1','trap2'], modes:['fire','selP','add','sub'], panels:['traps'],
+  formal:`
+<div class="def"><span class="dn">Voraussetzung</span><span class="m">S ≠ ∅</span>, alle Gewichte 1, keine isolierten Stellen oder Transitionen.</div>
+<div class="def"><span class="dn">Falle und Co-Falle (Def. 11.1)</span>Mit <span class="m">P• = ⋃ s•</span> und <span class="m">•P = ⋃ •s</span> für <span class="m">s ∈ P</span>:<ul><li>Falle: <span class="m">P• ⊆ •P</span>. Wer aus <span class="m">P</span> nimmt, legt auch wieder etwas in <span class="m">P</span>.</li><li>Co-Falle (Siphon): <span class="m">•P̂ ⊆ P̂•</span>. Wer in <span class="m">P̂</span> legt, nimmt auch aus <span class="m">P̂</span>.</li></ul>Beide sind abgeschlossen unter Vereinigung (Beob. 11.2): <span class="m">(P₁ ∪ P₂)• = P₁• ∪ P₂• ⊆ •P₁ ∪ •P₂ = •(P₁ ∪ P₂)</span>.</div>
+<div class="def"><span class="dn">Markierte Falle bleibt markiert (Beob. 11.3)</span><span class="m">P</span> Falle, <span class="m">M₀(P) ≥ 1 ⟹ M(P) ≥ 1</span> für alle <span class="m">M ∈ Reach</span>.<div class="proof"><b>Beweis</b> per Induktion über <span class="m">w</span> mit <span class="m">M₀[w⟩M̂[t⟩M</span>:<ol><li><span class="m">(•t ∪ t•) ∩ P = ∅</span>: <span class="m">M(P) = M̂(P) ≥ 1</span>.</li><li><span class="m">•t ∩ P = ∅</span>, aber <span class="m">t• ∩ P ≠ ∅</span>: <span class="m">t</span> legt nur hinein.</li><li><span class="m">•t ∩ P ≠ ∅</span>: <span class="m">t ∈ P• ⊆ •P</span>, also hat <span class="m">t</span> eine Nachstelle in <span class="m">P</span>.</li></ol></div></div>
+<div class="def"><span class="dn">Leere Co-Falle bleibt leer (Beob. 11.4)</span><span class="m">P̂</span> Co-Falle, <span class="m">M₀(P̂) = 0 ⟹ M(P̂) = 0</span> für alle <span class="m">M ∈ Reach</span>. Eine Transition, die in <span class="m">P̂</span> legt, müsste auch aus <span class="m">P̂</span> nehmen und ist bei leerem <span class="m">P̂</span> nicht aktiviert.</div>
+<div class="def"><span class="dn">Deadlock ⟹ leere Co-Falle (Beob. 11.5)</span>Ist <span class="m">M</span> ein Deadlock, gibt es eine Co-Falle <span class="m">P̂ ≠ ∅</span> mit <span class="m">M(P̂) = 0</span>.<div class="proof"><b>Beweis:</b> Für jedes <span class="m">t</span> ist eine Vorstelle <span class="m">sₜ</span> leer. Mit <span class="m">P̂ = {sₜ | t ∈ T}</span> gilt <span class="m">•P̂ ⊆ T = P̂•</span>.</div></div>
+<div class="def"><span class="dn">Co-Falle/Falle-Eigenschaft (Def. 11.6) und Satz 11.7</span>Jede nichtleere Co-Falle <span class="m">P̂</span> enthält eine Falle <span class="m">P ⊆ P̂</span> mit <span class="m">M₀(P) ≥ 1</span>. Dann ist das System deadlockfrei.<div class="proof"><b>Beweis (Widerspruch):</b> Sei <span class="m">M</span> ein erreichbarer Deadlock. Nach 11.5 gibt es <span class="m">P̂ ≠ ∅</span> mit <span class="m">M(P̂) = 0</span>. Nach der Eigenschaft gibt es eine Falle <span class="m">P ⊆ P̂</span> mit <span class="m">M₀(P) ≥ 1</span>, nach 11.3 also <span class="m">M(P) ≥ 1</span>. Aber <span class="m">M(P) ≤ M(P̂) = 0</span>.</div></div>
+<div class="def"><span class="dn">Free-Choice-Systeme (Def. 11.8, Sätze 11.9, 11.10)</span><span class="m">•t ∩ •t′ ≠ ∅ ⟹ •t = •t′</span>. Für Free-Choice-Systeme gilt: Co-Falle/Falle-Eigenschaft genau dann, wenn lebendig (Beweis nicht prüfungsrelevant).</div>`,
+  quiz:[
+    {q:'Wann ist P ⊆ S eine Falle?',
+     o:['P• ⊆ •P','•P ⊆ P•','•P ∩ P• = ∅'], c:0,
+     e:'Jede Transition, die aus P nimmt, muss auch wieder in P legen. •P ⊆ P• ist die Co-Falle.'},
+    {q:'Was liefert ein Deadlock M nach Beob. 11.5?',
+     o:['Eine nichtleere Co-Falle, die bei M leer ist','Eine markierte Falle','Eine positive T-Invariante'], c:0,
+     e:'Man nimmt für jede Transition eine leere Vorstelle. Die Menge dieser Stellen ist eine Co-Falle, und sie ist bei M unmarkiert.'},
+    {q:'Wie beweist man, dass die Co-Falle/Falle-Eigenschaft Deadlockfreiheit impliziert?',
+     o:['Per Widerspruch mit Beob. 11.5 und 11.3','Per Induktion über die Anzahl der Stellen','Über den Überdeckungsgraphen'], c:0,
+     e:'Ein Deadlock liefert eine leere Co-Falle. Die enthält eine anfangs markierte Falle, die markiert bleiben muss. Widerspruch.'}
+  ]}
+];
+
+/* ---------- Speicher ---------- */
+const STORE_KEY = 'petri-lernen-v1';
+function loadStore(){ try{ const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : {}; }catch(e){ return {}; } }
+function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
+let store = loadStore();
+store.quiz = store.quiz || {};
+
+/* ---------- Petri-Logik ---------- */
+const clone = o => JSON.parse(JSON.stringify(o));
+function prepNet(n){
+  const net = clone(n);
+  net.arcs = net.arcs.map(a => [a[0], a[1], a[2] || 1]);
+  net.pIds = net.places.map(p => p.id);
+  net.tIds = net.transitions.map(t => t.id);
+  net.pre = {}; net.post = {};
+  net.tIds.forEach(t => { net.pre[t] = {}; net.post[t] = {}; });
+  net.preP = {}; net.postP = {};
+  net.pIds.forEach(p => { net.preP[p] = new Set(); net.postP[p] = new Set(); });
+  net.arcs.forEach(([a, b, w]) => {
+    if (net.pre[b]) { net.pre[b][a] = w; net.postP[a].add(b); }
+    else { net.post[a][b] = w; net.preP[b].add(a); }
+  });
+  const m = {}; net.pIds.forEach(p => m[p] = net.m0[p] || 0); net.m0 = m;
+  return net;
+}
+function enabled(net, M, t){
+  for (const s in net.pre[t]) if (M[s] < net.pre[t][s]) return false;
+  if (net.type === 'ENS') for (const s in net.post[t]) if (M[s] > 0 && !(s in net.pre[t])) return false;
+  return true;
+}
+function fire(net, M, t){
+  const M2 = Object.assign({}, M);
+  for (const s in net.pre[t]) M2[s] -= net.pre[t][s];
+  for (const s in net.post[t]) M2[s] += net.post[t][s];
+  return M2;
+}
+function delta(net, t, s){ return (net.post[t][s] || 0) - (net.pre[t][s] || 0); }
+const mkey = (net, M) => net.pIds.map(p => M[p] === Infinity ? 'ω' : M[p]).join(',');
+function fmtM(net, M){
+  if (net.type === 'ENS') return '{' + net.pIds.filter(p => M[p] > 0).join(', ') + '}';
+  return '(' + net.pIds.map(p => M[p] === Infinity ? 'ω' : M[p]).join(', ') + ')';
+}
+
+function reach(net, limit = 60){
+  const nodes = [net.m0], parent = [null], idx = new Map([[mkey(net, net.m0), 0]]);
+  const edges = []; let truncated = false;
+  for (let i = 0; i < nodes.length; i++){
+    for (const t of net.tIds){
+      if (!enabled(net, nodes[i], t)) continue;
+      const M2 = fire(net, nodes[i], t), k = mkey(net, M2);
+      let j = idx.get(k);
+      if (j === undefined){
+        if (nodes.length >= limit){ truncated = true; continue; }
+        j = nodes.length; nodes.push(M2); parent.push([i, t]); idx.set(k, j);
+      }
+      edges.push([i, t, j]);
+    }
+  }
+  return { nodes, edges, parent, idx, truncated };
+}
+function pathTo(g, j){ const seq = []; while (g.parent[j]){ seq.unshift(g.parent[j][1]); j = g.parent[j][0]; } return seq; }
+
+function liveness(net, g){
+  const n = g.nodes.length, out = Array.from({length:n}, () => []);
+  g.edges.forEach(([i, t, j]) => out[i].push([t, j]));
+  const liveT = {}; net.tIds.forEach(t => liveT[t] = true);
+  const dead = [];
+  for (let i = 0; i < n; i++){
+    if (!out[i].length) dead.push(i);
+    const seen = new Set([i]), st = [i], nt = new Set();
+    while (st.length){ const v = st.pop(); for (const [t, j] of out[v]){ nt.add(t); if (!seen.has(j)){ seen.add(j); st.push(j); } } }
+    net.tIds.forEach(t => { if (!nt.has(t)) liveT[t] = false; });
+  }
+  return { liveT, dead };
+}
+
+function coverability(net, limit = 120){
+  const leq = (A, B) => net.pIds.every(s => A[s] <= B[s]);
+  const nodes = [net.m0], parent = [null], idx = new Map([[mkey(net, net.m0), 0]]), edges = [];
+  let truncated = false;
+  for (let i = 0; i < nodes.length; i++){
+    for (const t of net.tIds){
+      if (!enabled(net, nodes[i], t)) continue;
+      const M2 = fire(net, nodes[i], t);
+      let a = i;
+      while (a !== null){
+        const A = nodes[a];
+        if (leq(A, M2) && net.pIds.some(s => A[s] < M2[s])) net.pIds.forEach(s => { if (A[s] < M2[s]) M2[s] = Infinity; });
+        a = parent[a];
+      }
+      const k = mkey(net, M2); let j = idx.get(k);
+      if (j === undefined){
+        if (nodes.length >= limit){ truncated = true; continue; }
+        j = nodes.length; nodes.push(M2); parent.push(i); idx.set(k, j);
+      }
+      edges.push([i, t, j]);
+    }
+  }
+  return { nodes, edges, truncated };
+}
+
+function setPre(net, P){ const r = new Set(); P.forEach(s => net.preP[s].forEach(t => r.add(t))); return r; }
+function setPost(net, P){ const r = new Set(); P.forEach(s => net.postP[s].forEach(t => r.add(t))); return r; }
+const subset = (A, B) => [...A].every(x => B.has(x));
+const isTrap = (net, P) => subset(setPost(net, P), setPre(net, P));
+const isSiphon = (net, P) => subset(setPre(net, P), setPost(net, P));
+function allSets(net){
+  const ps = net.pIds, res = { traps:[], siphons:[] };
+  for (let mask = 1; mask < (1 << ps.length); mask++){
+    const P = new Set(ps.filter((_, i) => mask & (1 << i)));
+    if (isTrap(net, P)) res.traps.push(P);
+    if (isSiphon(net, P)) res.siphons.push(P);
+  }
+  return res;
+}
+const fmtSet = S => S.size ? '{' + [...S].join(', ') + '}' : '∅';
+const sumM = (M, P) => [...P].reduce((a, s) => a + M[s], 0);
+
+/* ---------- Zustand ---------- */
+const st = { li: 0, ex: 0, net: null, M: null, hist: [], stack: [], mode: 'fire', selT: new Set(), selP: new Set(), lastT: null, x: {}, y: {} };
+
+function loadExample(){
+  const L = LESSONS[st.li];
+  st.net = prepNet(NETS[L.examples[st.ex]]);
+  st.M = Object.assign({}, st.net.m0);
+  st.hist = []; st.stack = []; st.selT = new Set(); st.selP = new Set(); st.lastT = null;
+  st.x = {}; st.y = {};
+  if (!L.modes.includes(st.mode)) st.mode = 'fire';
+}
+function doFire(t){
+  if (!enabled(st.net, st.M, t)) return;
+  st.stack.push({ M: st.M, hist: st.hist.slice() });
+  st.M = fire(st.net, st.M, t); st.hist.push(t); st.lastT = t;
+  renderDynamic(t);
+}
+function doFireSet(U){
+  st.stack.push({ M: st.M, hist: st.hist.slice() });
+  let M = st.M; U.forEach(t => M = fire(st.net, M, t));
+  st.M = M; st.hist.push('{' + [...U].join(', ') + '}'); st.lastT = null; st.selT = new Set();
+  renderDynamic();
+}
+function undo(){ const s = st.stack.pop(); if (!s) return; st.M = s.M; st.hist = s.hist; st.lastT = null; renderDynamic(); }
+function resetM(){ st.M = Object.assign({}, st.net.m0); st.hist = []; st.stack = []; st.lastT = null; renderDynamic(); }
+function jumpTo(g, j){
+  st.stack.push({ M: st.M, hist: st.hist.slice() });
+  st.M = Object.assign({}, g.nodes[j]); st.hist = pathTo(g, j); st.lastT = null; renderDynamic();
+}
+function editToken(p, d){
+  const net = st.net;
+  let v = net.m0[p] + d;
+  if (net.type === 'ENS') v = Math.max(0, Math.min(1, v));
+  v = Math.max(0, Math.min(9, v));
+  net.m0[p] = v; st.M = Object.assign({}, net.m0); st.hist = []; st.stack = []; st.lastT = null;
+  renderDynamic();
+}
+
+/* ---------- SVG: Netz ---------- */
+const R = 20, TW = 22, TH = 42;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function boundary(node, tx, ty, hw, hh){
+  const dx = tx - node.x, dy = ty - node.y, d = Math.hypot(dx, dy) || 1;
+  if (node.kind === 'p') return [node.x + dx / d * R, node.y + dy / d * R];
+  const s = Math.min(hw / (Math.abs(dx) || 1e-9), hh / (Math.abs(dy) || 1e-9));
+  return [node.x + dx * s, node.y + dy * s];
+}
+function tokensSVG(p, n){
+  if (n === 0) return '';
+  if (n === Infinity) return `<text class="toktxt" x="${p.x}" y="${p.y}">ω</text>`;
+  const pos = {1:[[0,0]],2:[[-6,0],[6,0]],3:[[0,-6],[-6,5],[6,5]],4:[[-6,-6],[6,-6],[-6,6],[6,6]]}[n];
+  if (!pos) return `<text class="toktxt" x="${p.x}" y="${p.y}">${n}</text>`;
+  return pos.map(([dx, dy]) => `<circle class="tok" cx="${p.x + dx}" cy="${p.y + dy}" r="4.6"/>`).join('');
+}
+function labelPos(node){
+  const lp = node.lp || 'b', off = node.kind === 'p' ? R + 8 : (lp === 't' || lp === 'b' ? TH / 2 + 8 : TW / 2 + 8);
+  if (lp === 't') return [node.x, node.y - off, 'middle', 'auto'];
+  if (lp === 'b') return [node.x, node.y + off + 12, 'middle', 'auto'];
+  if (lp === 'l') return [node.x - off, node.y + 5, 'end', 'auto'];
+  return [node.x + off, node.y + 5, 'start', 'auto'];
+}
+function netSVG(){
+  const net = st.net, M = st.M, L = LESSONS[st.li];
+  const nodes = {};
+  net.places.forEach(p => nodes[p.id] = Object.assign({ kind:'p' }, p));
+  net.transitions.forEach(t => nodes[t.id] = Object.assign({ kind:'t' }, t));
+  const xs = Object.values(nodes).map(n => n.x), ys = Object.values(nodes).map(n => n.y);
+  const x0 = Math.min(...xs) - 90, x1 = Math.max(...xs) + 90, y0 = Math.min(...ys) - 55, y1 = Math.max(...ys) + 60;
+  const has = new Set(net.arcs.map(a => a[0] + '>' + a[1]));
+  let s = `<svg class="net" viewBox="${x0} ${y0} ${x1 - x0} ${y1 - y0}" role="group" aria-label="Petri-Netz ${esc(net.name)}">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>`;
+  net.arcs.forEach(([a, b, w]) => {
+    const A = nodes[a], B = nodes[b], bid = has.has(b + '>' + a);
+    const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1;
+    let path, lx, ly;
+    if (bid){
+      const off = 17, cx = (A.x + B.x) / 2 - dy / d * off, cy = (A.y + B.y) / 2 + dx / d * off;
+      const [sx, sy] = boundary(A, cx, cy, TW / 2, TH / 2), [ex, ey] = boundary(B, cx, cy, TW / 2, TH / 2);
+      path = `M${sx},${sy} Q${cx},${cy} ${ex},${ey}`;
+      lx = .25 * sx + .5 * cx + .25 * ex - dy / d * 11; ly = .25 * sy + .5 * cy + .25 * ey + dx / d * 11;
+    } else {
+      const [sx, sy] = boundary(A, B.x, B.y, TW / 2, TH / 2), [ex, ey] = boundary(B, A.x, A.y, TW / 2, TH / 2);
+      path = `M${sx},${sy} L${ex},${ey}`;
+      lx = (sx + ex) / 2 - dy / d * 11; ly = (sy + ey) / 2 + dx / d * 11;
+    }
+    s += `<path class="arc" d="${path}" marker-end="url(#arr)"/>`;
+    if (w > 1) s += `<text class="wlbl" x="${lx}" y="${ly}">${w}</text>`;
+  });
+  const pClick = ['selP', 'add', 'sub'].includes(st.mode);
+  net.places.forEach(p0 => {
+    const p = nodes[p0.id], [lx, ly, anc] = labelPos(p), sel = st.selP.has(p.id);
+    const aria = `Stelle ${p.id}, ${M[p.id]} Marke${M[p.id] === 1 ? '' : 'n'}`;
+    s += `<g class="place${sel ? ' sel' : ''}${pClick ? ' clickable' : ''}" data-p="${esc(p.id)}"${pClick ? ` role="button" tabindex="0"` : ''} aria-label="${esc(aria)}">
+      <circle class="body" cx="${p.x}" cy="${p.y}" r="${R}"/>${tokensSVG(p, M[p.id])}
+      <text class="lbl" x="${lx}" y="${ly}" text-anchor="${anc}">${esc(p.id)}</text></g>`;
+  });
+  net.transitions.forEach(t0 => {
+    const t = nodes[t0.id], en = enabled(net, M, t.id), [lx, ly, anc] = labelPos(t), sel = st.selT.has(t.id);
+    const clickable = (st.mode === 'fire' && en) || st.mode === 'selT';
+    s += `<g class="trans${en ? ' en' : ''}${sel ? ' sel' : ''}${clickable ? ' clickable' : ''}" data-t="${esc(t.id)}"${clickable ? ` role="button" tabindex="0"` : ''} aria-label="Transition ${esc(t.id)}${en ? ', aktiviert' : ''}">
+      <rect class="body" x="${t.x - TW / 2}" y="${t.y - TH / 2}" width="${TW}" height="${TH}" rx="2"/>
+      <rect x="${t.x - 22}" y="${t.y - 28}" width="44" height="56" fill="transparent"/>
+      <text class="lbl" x="${lx}" y="${ly}" text-anchor="${anc}">${esc(t.id)}</text></g>`;
+  });
+  return s + '</svg>';
+}
+
+/* ---------- SVG: Graphen ---------- */
+function graphSVG(g, net, opts){
+  const n = g.nodes.length, depth = Array(n).fill(-1); depth[0] = 0;
+  const out = Array.from({length:n}, () => []); g.edges.forEach(([i, , j]) => out[i].push(j));
+  const q = [0];
+  while (q.length){ const v = q.shift(); out[v].forEach(j => { if (depth[j] < 0){ depth[j] = depth[v] + 1; q.push(j); } }); }
+  const levels = []; for (let i = 0; i < n; i++){ const d = Math.max(0, depth[i]); (levels[d] = levels[d] || []).push(i); }
+  const labels = g.nodes.map(M => fmtM(net, M));
+  const bw = labels.map(l => Math.max(56, l.length * 6.9 + 18)), bh = 28;
+  const colW = Math.max(...bw) + 70, rowH = 78;
+  const maxL = Math.max(...levels.map(l => l.length));
+  const Wc = Math.max(maxL * colW, 300), W = Wc + 70, H = levels.length * rowH + 20;
+  const pos = [];
+  levels.forEach((lv, d) => lv.forEach((i, k) => { pos[i] = { x: 15 + (Wc - lv.length * colW) / 2 + (k + .5) * colW, y: d * rowH + 34 }; }));
+  const has = new Set(g.edges.map(([i, , j]) => i + '>' + j));
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="${esc(opts.aria)}">
+    <defs><marker id="garr${opts.id}" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>`;
+  const grouped = {};
+  g.edges.forEach(([i, t, j]) => { const k = i + '>' + j; (grouped[k] = grouped[k] || []).push(t); });
+  Object.entries(grouped).forEach(([k, ts]) => {
+    const [i, j] = k.split('>').map(Number), A = pos[i], B = pos[j], lbl = ts.join(', ');
+    const nA = { x:A.x, y:A.y, kind:'r' }, nB = { x:B.x, y:B.y, kind:'r' };
+    if (i === j){
+      const x = A.x + bw[i] / 2, y = A.y;
+      s += `<path class="g-edge" d="M${x},${y - 6} C${x + 34},${y - 30} ${x + 34},${y + 30} ${x},${y + 6}" marker-end="url(#garr${opts.id})"/><text class="g-elbl" x="${x + 30}" y="${y}" text-anchor="start" style="text-anchor:start">${esc(lbl)}</text>`;
+      return;
+    }
+    const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1;
+    const curve = has.has(j + '>' + i) || depth[i] === depth[j] || Math.abs(depth[j] - depth[i]) > 1;
+    const off = curve ? (depth[j] < depth[i] ? -30 : 26) : 0;
+    const cx = (A.x + B.x) / 2 - dy / d * off, cy = (A.y + B.y) / 2 + dx / d * off;
+    const [sx, sy] = boundary(nA, cx, cy, bw[i] / 2, bh / 2), [ex, ey] = boundary(nB, cx, cy, bw[j] / 2, bh / 2);
+    const lx = .25 * sx + .5 * cx + .25 * ex, ly = .25 * sy + .5 * cy + .25 * ey;
+    s += `<path class="g-edge" d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" marker-end="url(#garr${opts.id})"/><text class="g-elbl" x="${lx}" y="${ly}">${esc(lbl)}</text>`;
+  });
+  g.nodes.forEach((M, i) => {
+    const P = pos[i], cls = ['g-node'];
+    if (opts.current === i) cls.push('cur');
+    if (i === 0) cls.push('m0');
+    if (opts.dead && opts.dead.includes(i)) cls.push('dead');
+    if (opts.omega && net.pIds.some(p => M[p] === Infinity)) cls.push('omega');
+    if (opts.clickable) cls.push('clickable');
+    s += `<g class="${cls.join(' ')}" data-node="${i}"${opts.clickable ? ` role="button" tabindex="0" aria-label="Zu Markierung ${esc(labels[i])} springen"` : ''}>
+      <rect x="${P.x - bw[i] / 2}" y="${P.y - bh / 2}" width="${bw[i]}" height="${bh}" rx="${i === 0 ? 14 : 6}"/>
+      <text x="${P.x}" y="${P.y + 1}">${esc(labels[i])}</text></g>`;
+  });
+  return s + '</svg>';
+}
+
+/* ---------- Rendering ---------- */
+const $ = s => document.querySelector(s);
+function renderNav(){
+  const ol = $('#lessons');
+  ol.innerHTML = LESSONS.map((L, i) => {
+    const done = isDone(L);
+    return `<li><button class="lesson-btn" data-li="${i}" aria-current="${i === st.li}">
+      <span class="lesson-num">${i + 1}</span>
+      <span class="lesson-name">${esc(L.title)}<span class="lesson-kap">${esc(L.kap)}</span></span>
+      <span class="lesson-done" aria-label="${done ? 'abgeschlossen' : ''}">${done ? '✓' : ''}</span></button></li>`;
+  }).join('');
+  const nDone = LESSONS.filter(isDone).length;
+  $('#progtxt').textContent = `${nDone} von ${LESSONS.length} Lektionen abgeschlossen`;
+  $('#progbar').style.width = (nDone / LESSONS.length * 100) + '%';
+  if (window.innerWidth <= 900){ const cur = ol.querySelector('[aria-current="true"]'); if (cur) ol.scrollLeft = cur.offsetLeft - 16; }
+}
+function isDone(L){ const a = store.quiz[L.id] || {}; return L.quiz.every((_, k) => a[k] === true); }
+
+const MODE_LABEL = { fire:'Schalten', selT:'Vergleichen', selP:'Stellen wählen', add:'Marke +', sub:'Marke −' };
+
+function renderLesson(){
+  const L = LESSONS[st.li];
+  const main = $('#main');
+  main.innerHTML = `
+    <header class="l-head">
+      <p class="l-kap">Lektion ${st.li + 1} von ${LESSONS.length}, ${esc(L.kap)}</p>
+      <h1 class="l-title">${esc(L.title)}</h1>
+      <p class="idea">${L.idea}</p>
+    </header>
+    <section class="section" aria-labelledby="h-try">
+      <h2 id="h-try">Ausprobieren</h2>
+      <p class="hint">${L.tryIt}</p>
+      ${L.examples.length > 1 ? `<div class="examples" role="group" aria-label="Beispiel wählen">${L.examples.map((e, i) => `<button class="chip" data-ex="${i}" aria-pressed="${i === st.ex}">${esc(NETS[e].name)}</button>`).join('')}</div>` : ''}
+      <div class="toolbar">
+        ${L.modes.length > 1 ? `<div class="seg" role="group" aria-label="Modus">${L.modes.map(m => `<button data-mode="${m}" aria-pressed="${m === st.mode}">${MODE_LABEL[m]}</button>`).join('')}</div>` : ''}
+        <button class="btn" id="undo">Rückgängig</button>
+        <button class="btn" id="reset">Zurück zu M₀</button>
+      </div>
+      <div class="stage">
+        <div class="canvas" id="canvas"></div>
+        <aside class="side" id="side" aria-live="polite"></aside>
+      </div>
+      <div id="panels"></div>
+    </section>
+    <section class="section">
+      <details class="formal-toggle" open>
+        <summary><h2>Formal</h2></summary>
+        <div class="formal">${L.formal}</div>
+      </details>
+      <p class="hint" style="margin-top:10px">Mit <span class="star" style="color:var(--en);font-weight:700">*</span> markiert: muss laut Fragenkatalog präzise erklärt werden können.</p>
+    </section>
+    <section class="section" aria-labelledby="h-quiz">
+      <h2 id="h-quiz">Check</h2>
+      <p class="hint">Beantworte alle Fragen richtig, dann gilt die Lektion als abgeschlossen.</p>
+      <div id="quiz"></div>
+    </section>
+    <div class="nav-next">
+      ${st.li > 0 ? `<button class="btn" data-go="${st.li - 1}">Zurück: ${esc(LESSONS[st.li - 1].title)}</button>` : '<span></span>'}
+      ${st.li < LESSONS.length - 1 ? `<button class="btn primary" data-go="${st.li + 1}">Weiter: ${esc(LESSONS[st.li + 1].title)}</button>` : ''}
+    </div>`;
+  renderQuiz();
+  renderStaticPanels();
+  renderDynamic();
+}
+
+function renderStaticPanels(){
+  const L = LESSONS[st.li], net = st.net, box = $('#panels');
+  let html = '';
+  L.panels.forEach(p => {
+    if (p === 'graph') html += `<div class="panel"><h3>Erreichbarkeitsgraph</h3><p class="muted" id="graph-note"></p><div class="graphwrap" id="graph"></div></div>`;
+    if (p === 'live') html += `<div class="panel"><h3>Analyse auf dem Graphen</h3><div id="live"></div></div>`;
+    if (p === 'rel') html += `<div class="panel"><h3>Beziehungen und Parallelschaltung</h3><div id="rel"></div></div>`;
+    if (p === 'cover') html += `<div class="panel"><h3>Überdeckungsgraph</h3><p class="muted" id="cover-note"></p><div class="graphwrap" id="cover"></div><div id="bounds" style="margin-top:10px"></div></div>`;
+    if (p === 'traps') html += `<div class="panel"><h3>Fallen und Co-Fallen</h3><div id="traps"></div></div>`;
+    if (p === 'matrix'){
+      const head = net.tIds.map(t => `<th class="mcol">${esc(t)}</th>`).join('');
+      const rows = net.pIds.map(p => `<tr><th class="mcol l">${esc(p)}</th>${net.tIds.map(t => `<td>${delta(net, t, p)}</td>`).join('')}
+        <td><input class="vecin" type="number" step="1" data-y="${esc(p)}" value="0" aria-label="y für ${esc(p)}"></td><td id="dx-${esc(p)}"></td></tr>`).join('');
+      html += `<div class="panel"><h3>Matrix Δ und Invarianten</h3>
+        <p>Zeilen sind Stellen, Spalten Transitionen. Trag unten einen Vektor x (Transitionen) und rechts einen Vektor y (Stellen) ein.</p>
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th class="l">Δ</th>${head}<th>y</th><th>(Δ ∘ x)</th></tr></thead>
+          <tbody>${rows}
+          <tr><th class="l">x</th>${net.tIds.map(t => `<td><input class="vecin" type="number" step="1" data-x="${esc(t)}" value="0" aria-label="x für ${esc(t)}"></td>`).join('')}<td></td><td></td></tr>
+          <tr><th class="l">y ∘ Δ</th>${net.tIds.map(t => `<td id="yd-${esc(t)}"></td>`).join('')}<td></td><td></td></tr>
+          </tbody></table></div>
+        <div class="cols"><div class="result" id="xres"></div><div class="result" id="yres"></div></div></div>`;
+    }
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('input[data-x]').forEach(i => i.addEventListener('input', () => { st.x[i.dataset.x] = parseInt(i.value, 10) || 0; updateMatrix(); }));
+  box.querySelectorAll('input[data-y]').forEach(i => i.addEventListener('input', () => { st.y[i.dataset.y] = parseInt(i.value, 10) || 0; updateMatrix(); }));
+}
+
+function updateMatrix(){
+  if (!$('#xres')) return;
+  const net = st.net;
+  const x = t => st.x[t] || 0, y = p => st.y[p] || 0;
+  const dx = net.pIds.map(p => net.tIds.reduce((a, t) => a + delta(net, t, p) * x(t), 0));
+  net.pIds.forEach((p, i) => { $('#dx-' + CSS.escape(p)).textContent = dx[i]; });
+  const yd = net.tIds.map(t => net.pIds.reduce((a, p) => a + y(p) * delta(net, t, p), 0));
+  net.tIds.forEach((t, i) => { $('#yd-' + CSS.escape(t)).textContent = yd[i]; });
+  const xZero = net.tIds.every(t => x(t) === 0), yZero = net.pIds.every(p => y(p) === 0);
+  let xr;
+  if (xZero) xr = '<span class="muted">Trag einen Vektor x ein.</span>';
+  else if (dx.every(v => v === 0)) xr = `<span class="tag ok">T-Invariante</span> Δ ∘ x = 0. ${net.tIds.every(t => x(t) > 0) ? 'Sogar positiv.' : ''}`;
+  else if (dx.every(v => v >= 0) && net.tIds.every(t => x(t) >= 0)) xr = `<span class="tag neu">Δ ∘ x &gt; 0</span> x ∈ ℕⁿ mit Δ ∘ x &gt; 0: Für eine passende Anfangsmarkierung ist das System unbeschränkt (Satz 10.7).`;
+  else xr = `<span class="tag bad">keine T-Invariante</span> Δ ∘ x ≠ 0.`;
+  $('#xres').innerHTML = `<b>Vektor x</b><br>${xr}`;
+  let yr;
+  if (yZero) yr = '<span class="muted">Trag einen Vektor y ein.</span>';
+  else {
+    const inv = yd.every(v => v === 0), yM = net.pIds.reduce((a, p) => a + y(p) * st.M[p], 0), yM0 = net.pIds.reduce((a, p) => a + y(p) * net.m0[p], 0);
+    yr = inv ? `<span class="tag ok">S-Invariante</span> ${net.pIds.every(p => y(p) > 0) ? 'Positiv, also strukturell beschränkt. ' : ''}` : `<span class="tag bad">keine S-Invariante</span> `;
+    yr += `<br><span class="m">y ∘ M₀ = ${yM0}</span>, <span class="m">y ∘ M = ${yM}</span>${inv ? ' (bleibt beim Schalten gleich)' : ''}.`;
+  }
+  $('#yres').innerHTML = `<b>Vektor y</b><br>${yr}`;
+}
+
+function renderDynamic(flashT){
+  const L = LESSONS[st.li], net = st.net;
+  $('#canvas').innerHTML = netSVG();
+  if (flashT){ const g = $(`#canvas [data-t="${CSS.escape(flashT)}"]`); if (g) g.classList.add('flash'); }
+  $('#undo').disabled = !st.stack.length;
+  // Seitenleiste
+  const en = net.tIds.filter(t => enabled(net, st.M, t));
+  let side = `<div class="block"><h3>Aktuelle Markierung M</h3><div class="marking">${esc(fmtM(net, st.M))}</div>
+    ${net.type === 'STS' ? `<div class="muted" style="font-size:.84rem">Reihenfolge: ${net.pIds.map(esc).join(', ')}</div>` : ''}</div>
+    <div class="block"><h3>Schaltfolge ab M₀</h3><div class="seq">${st.hist.length ? esc(st.hist.join(' ')) : 'ε (leer)'}</div></div>
+    <div class="block"><h3>Aktiviert</h3>${en.length ? en.map(t => `<span class="tag neu">${esc(t)}</span>`).join('') : '<span class="tag bad">nichts, Deadlock</span>'}</div>`;
+  if (net.type === 'STS' && st.lastT) side += `<div class="block"><h3>Letzter Schritt: Δ${esc(st.lastT)}</h3><div class="marking">(${net.pIds.map(p => { const v = delta(net, st.lastT, p); return v > 0 ? '+' + v : v; }).join(', ')})</div></div>`;
+  if (st.mode === 'fire') side += `<div class="block muted" style="font-size:.88rem">Tipp: Transitionen sind auch per Tab und Enter bedienbar.</div>`;
+  if (st.mode === 'selT') side += `<div class="block muted" style="font-size:.88rem">Klick Transitionen an, um sie auszuwählen oder abzuwählen.</div>`;
+  if (st.mode === 'selP') side += `<div class="block muted" style="font-size:.88rem">Klick Stellen an, um die Menge P zusammenzustellen.</div>`;
+  if (st.mode === 'add' || st.mode === 'sub') side += `<div class="block muted" style="font-size:.88rem">Ein Klick auf eine Stelle ändert die Anfangsmarkierung M₀.</div>`;
+  $('#side').innerHTML = side;
+
+  // Graph
+  let g = null;
+  if (L.panels.includes('graph') || L.panels.includes('live') || L.panels.includes('traps')) g = reach(net);
+  if ($('#graph')){
+    const cur = g.idx.get(mkey(net, st.M));
+    const lv = !g.truncated ? liveness(net, g) : null;
+    $('#graph-note').textContent = g.truncated
+      ? `Mehr als ${g.nodes.length} erreichbare Markierungen, die Anzeige bricht hier ab.`
+      : `${g.nodes.length} erreichbare Markierungen, ${g.edges.length} Kanten. Dick umrandet: M₀. Klick auf einen Knoten springt dorthin.`;
+    if (g.nodes.length <= 30){
+      $('#graph').innerHTML = graphSVG(g, net, { id:'g', current: cur, clickable:true, dead: lv ? lv.dead : null, aria:'Erreichbarkeitsgraph' });
+      $('#graph').querySelectorAll('[data-node]').forEach(el => {
+        const go = () => jumpTo(g, +el.dataset.node);
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+      });
+    } else $('#graph').innerHTML = `<p style="padding:12px" class="muted">Zu groß zum Zeichnen. Schau dir stattdessen den Überdeckungsgraphen an.</p>`;
+  }
+  if ($('#live')){
+    if (g.truncated) $('#live').innerHTML = '<p class="muted">Der Graph ist zu groß für die Analyse.</p>';
+    else {
+      const lv = liveness(net, g), allLive = net.tIds.every(t => lv.liveT[t]);
+      $('#live').innerHTML = `
+        <p><span class="tag ${lv.dead.length ? 'bad' : 'ok'}">${lv.dead.length ? 'nicht deadlockfrei' : 'deadlockfrei'}</span>
+           <span class="tag ${allLive ? 'ok' : 'bad'}">${allLive ? 'lebendig' : 'nicht lebendig'}</span></p>
+        ${lv.dead.length ? `<p>Deadlock${lv.dead.length > 1 ? 's' : ''}: ${lv.dead.map(i => `<span class="m">${esc(fmtM(net, g.nodes[i]))}</span>`).join(', ')}. Im Graphen gestrichelt.</p>` : ''}
+        <div class="tblwrap"><table class="tbl"><thead><tr><th class="l">Transition</th><th>lebendig?</th><th class="l">Begründung</th></tr></thead><tbody>
+        ${net.tIds.map(t => `<tr><td class="mcol l">${esc(t)}</td><td>${lv.liveT[t] ? '<span class="tag ok">ja</span>' : '<span class="tag bad">nein</span>'}</td>
+          <td class="l">${lv.liveT[t] ? `t ∈ NT(M) für jeden Knoten M` : `Es gibt einen Knoten M mit ${esc(t)} ∉ NT(M)`}</td></tr>`).join('')}
+        </tbody></table></div>`;
+    }
+  }
+  if ($('#rel')) renderRel();
+  if ($('#cover')){
+    const cg = coverability(net), cur = cg.nodes.findIndex(M => net.pIds.every(p => M[p] === st.M[p]));
+    $('#cover-note').textContent = `${cg.nodes.length} Knoten. Blau umrandet: Knoten mit ω.`;
+    $('#cover').innerHTML = graphSVG(cg, net, { id:'c', current: cur >= 0 ? cur : null, omega:true, aria:'Überdeckungsgraph' });
+    const unb = net.pIds.filter(p => cg.nodes.some(M => M[p] === Infinity));
+    $('#bounds').innerHTML = `<b>Beschränktheit pro Stelle:</b> ${net.pIds.map(p => `<span class="tag ${unb.includes(p) ? 'bad' : 'ok'}">${esc(p)} ${unb.includes(p) ? 'unbeschränkt' : 'beschränkt'}</span>`).join('')}
+      <br>${unb.length ? `Das System ist <b>unbeschränkt</b>, also ist G(STS) unendlich.` : `Das System ist <b>beschränkt</b>, G(STS) ist endlich.`}`;
+  }
+  if ($('#traps')) renderTraps(g);
+  updateMatrix();
+}
+
+function renderRel(){
+  const net = st.net, U = [...st.selT];
+  const pre = t => new Set(Object.keys(net.pre[t])), post = t => new Set(Object.keys(net.post[t]));
+  const inter = (A, B) => [...A].filter(x => B.has(x));
+  let h = '';
+  if (st.mode !== 'selT') h += `<p class="muted">Wechsle oben in den Modus „Vergleichen“, um Transitionen auszuwählen.</p>`;
+  if (U.length === 0) h += `<p>Noch keine Transition gewählt.</p>`;
+  if (U.length) h += `<div class="tblwrap"><table class="tbl"><thead><tr><th class="l">t</th><th>•t</th><th>t•</th></tr></thead><tbody>${U.map(t => `<tr><td class="mcol l">${esc(t)}</td><td class="mcol">${esc(fmtSet(pre(t)))}</td><td class="mcol">${esc(fmtSet(post(t)))}</td></tr>`).join('')}</tbody></table></div>`;
+  if (U.length === 2){
+    const [a, b] = U, rel = [];
+    const c1 = inter(post(a), pre(b)), c2 = inter(post(b), pre(a));
+    if (c1.length) rel.push(`<span class="tag neu">kausal abhängig</span> ${esc(a)}• ∩ •${esc(b)} = {${c1.join(', ')}}: ${esc(b)} braucht eine Marke von ${esc(a)}.`);
+    if (c2.length) rel.push(`<span class="tag neu">kausal abhängig</span> ${esc(b)}• ∩ •${esc(a)} = {${c2.join(', ')}}: ${esc(a)} braucht eine Marke von ${esc(b)}.`);
+    const k1 = inter(pre(a), pre(b)), k2 = inter(post(a), post(b));
+    if (k1.length) rel.push(`<span class="tag bad">Konflikt</span> gemeinsame Vorstelle {${k1.join(', ')}}: Schaltet eine, ist die andere deaktiviert.`);
+    if (k2.length) rel.push(`<span class="tag bad">Konflikt</span> gemeinsame Nachstelle {${k2.join(', ')}}.`);
+    if (!rel.length) rel.push(`<span class="tag ok">unabhängig</span> (•${esc(a)} ∪ ${esc(a)}•) ∩ (•${esc(b)} ∪ ${esc(b)}•) = ∅.`);
+    h += `<p class="result">${rel.join('<br>')}</p>`;
+  }
+  if (U.length >= 1){
+    let indep = true;
+    for (let i = 0; i < U.length; i++) for (let j = i + 1; j < U.length; j++){
+      const A = new Set([...pre(U[i]), ...post(U[i])]), B = new Set([...pre(U[j]), ...post(U[j])]);
+      if (inter(A, B).length) indep = false;
+    }
+    const act = U.every(t => enabled(net, st.M, t));
+    const ok = indep && act;
+    h += `<p class="result"><b>U = ${esc(fmtSet(new Set(U)))}</b>: ${indep ? '<span class="tag ok">unabhängig</span>' : '<span class="tag bad">nicht unabhängig</span>'}
+      ${act ? '<span class="tag ok">M-aktiviert</span>' : '<span class="tag bad">nicht M-aktiviert</span>'}
+      <br>${ok ? `Also gilt M[U⟩M′ mit M′ = ${esc(fmtM(net, U.reduce((M, t) => fire(net, M, t), st.M)))}.` : 'U darf bei M nicht parallel schalten.'}</p>
+      <div class="toolbar"><button class="btn primary" id="firepar" ${ok ? '' : 'disabled'}>U parallel schalten</button><button class="btn" id="clearsel">Auswahl leeren</button></div>`;
+  }
+  $('#rel').innerHTML = h;
+  const fp = $('#firepar'); if (fp) fp.addEventListener('click', () => doFireSet(new Set(U)));
+  const cs = $('#clearsel'); if (cs) cs.addEventListener('click', () => { st.selT = new Set(); renderDynamic(); });
+}
+
+function renderTraps(g){
+  const net = st.net, P = st.selP, sets = allSets(net);
+  const ctrap = sets.siphons.map(Q => {
+    const inner = sets.traps.filter(T => subset(T, Q));
+    const u0 = new Set(); inner.forEach(T => T.forEach(s => u0.add(s))); const u = new Set(net.pIds.filter(s => u0.has(s)));
+    return { Q, maxTrap: u, ok: sumM(net.m0, u) >= 1 };
+  });
+  const cfOk = ctrap.every(c => c.ok);
+  const lv = g && !g.truncated ? liveness(net, g) : null;
+  const setBtns = (list, kind) => list.length ? list.map((S, i) => `<button class="setbtn" data-set="${kind}:${i}">${esc(fmtSet(S))}</button>`).join('') : '<span class="muted">keine</span>';
+  let h = `<div class="cols">
+    <div><b>Fallen</b> (P• ⊆ •P)<div class="setlist">${setBtns(sets.traps, 't')}</div>
+         <b>Co-Fallen</b> (•P ⊆ P•)<div class="setlist">${setBtns(sets.siphons, 's')}</div></div>
+    <div><b>Gewählte Menge P = ${esc(fmtSet(P))}</b>`;
+  if (P.size){
+    const pre = setPre(net, P), post = setPost(net, P);
+    h += `<div class="marking" style="font-size:1rem;margin:4px 0">•P = ${esc(fmtSet(pre))}, P• = ${esc(fmtSet(post))}</div>
+      ${isTrap(net, P) ? '<span class="tag ok">Falle</span>' : '<span class="tag bad">keine Falle</span>'}
+      ${isSiphon(net, P) ? '<span class="tag ok">Co-Falle</span>' : '<span class="tag bad">keine Co-Falle</span>'}
+      <br><span class="m">M₀(P) = ${sumM(net.m0, P)}</span>, <span class="m">M(P) = ${sumM(st.M, P)}</span>
+      <div class="toolbar" style="margin-top:8px"><button class="btn" id="clearP">Auswahl leeren</button></div>`;
+  } else h += `<p class="muted">Wähle Stellen im Modus „Stellen wählen“ oder klick links auf eine Menge.</p>`;
+  h += `</div></div>
+    <div class="result" style="margin-top:12px"><b>Co-Falle/Falle-Eigenschaft bei M₀</b><br>
+    ${ctrap.map(c => `Co-Falle <span class="m">${esc(fmtSet(c.Q))}</span>: größte enthaltene Falle <span class="m">${esc(fmtSet(c.maxTrap))}</span>, ${c.ok ? '<span class="tag ok">markiert</span>' : '<span class="tag bad">unmarkiert</span>'}`).join('<br>')}
+    <p style="margin-top:8px">${cfOk ? '<span class="tag ok">Eigenschaft erfüllt</span> Nach Satz 11.7 ist das System deadlockfrei.' : '<span class="tag bad">Eigenschaft verletzt</span> Satz 11.7 greift nicht; ein Deadlock ist möglich, aber nicht zwingend.'}
+    ${lv ? `<br>Zum Vergleich, aus dem Erreichbarkeitsgraphen: ${lv.dead.length ? `<span class="tag bad">Deadlock erreichbar</span> bei <span class="m">${esc(fmtM(net, g.nodes[lv.dead[0]]))}</span>` : '<span class="tag ok">deadlockfrei</span>'}` : ''}</p></div>`;
+  $('#traps').innerHTML = h;
+  $('#traps').querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => {
+    const [k, i] = b.dataset.set.split(':'); st.selP = new Set(k === 't' ? sets.traps[+i] : sets.siphons[+i]); renderDynamic();
+  }));
+  const cp = $('#clearP'); if (cp) cp.addEventListener('click', () => { st.selP = new Set(); renderDynamic(); });
+}
+
+function renderQuiz(){
+  const L = LESSONS[st.li], ans = store.quiz[L.id] = store.quiz[L.id] || {};
+  const box = $('#quiz');
+  box.innerHTML = L.quiz.map((q, k) => `<div class="q" data-q="${k}"><p class="q-text">${k + 1}. ${esc(q.q)}</p>
+    <div class="opts">${q.o.map((o, i) => `<button class="opt" data-o="${i}">${esc(o)}</button>`).join('')}</div><div class="fb"></div></div>`).join('');
+  box.querySelectorAll('.q').forEach(qe => {
+    const k = +qe.dataset.q, q = L.quiz[k];
+    const show = (i) => {
+      qe.querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === q.c) b.classList.add('right'); else if (j === i) b.classList.add('wrong'); });
+      const ok = i === q.c;
+      qe.querySelector('.fb').innerHTML = `<p class="expl ${ok ? 'ok' : 'bad'}"><b>${ok ? 'Richtig.' : 'Nicht ganz.'}</b> ${esc(q.e)}</p>
+        ${ok ? '' : '<div class="q-foot"><button class="btn retry">Nochmal versuchen</button></div>'}`;
+      const r = qe.querySelector('.retry');
+      if (r) r.addEventListener('click', () => { qe.querySelectorAll('.opt').forEach(b => { b.disabled = false; b.classList.remove('right', 'wrong'); }); qe.querySelector('.fb').innerHTML = ''; });
+    };
+    if (ans[k] === true) show(q.c);
+    qe.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
+      const i = +b.dataset.o; show(i);
+      if (i === q.c){ ans[k] = true; saveStore(); renderNav(); }
+    }));
+  });
+}
+
+/* ---------- Events ---------- */
+function goLesson(i){
+  st.li = i; st.ex = 0; st.mode = 'fire'; loadExample();
+  store.last = i; saveStore();
+  renderNav(); renderLesson(); window.scrollTo({ top: 0 });
+}
+document.addEventListener('click', e => {
+  const lb = e.target.closest('.lesson-btn'); if (lb){ goLesson(+lb.dataset.li); return; }
+  const go = e.target.closest('[data-go]'); if (go){ goLesson(+go.dataset.go); return; }
+  const ex = e.target.closest('[data-ex]'); if (ex){ st.ex = +ex.dataset.ex; loadExample(); renderLesson(); return; }
+  const md = e.target.closest('[data-mode]'); if (md){
+    st.mode = md.dataset.mode;
+    document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === st.mode));
+    renderDynamic(); return;
+  }
+  if (e.target.closest('#undo')){ undo(); return; }
+  if (e.target.closest('#reset')){ resetM(); return; }
+  if (e.target.closest('#canvas')) handleCanvas(e.target);
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('#canvas [role="button"]')){ e.preventDefault(); handleCanvas(e.target); }
+});
+function handleCanvas(target){
+  const tg = target.closest('[data-t]'), pg = target.closest('[data-p]');
+  if (tg){
+    const t = tg.dataset.t;
+    if (st.mode === 'fire') doFire(t);
+    else if (st.mode === 'selT'){ st.selT.has(t) ? st.selT.delete(t) : st.selT.add(t); renderDynamic(); }
+    refocus('[data-t="' + CSS.escape(t) + '"]');
+  } else if (pg){
+    const p = pg.dataset.p;
+    if (st.mode === 'selP'){ st.selP.has(p) ? st.selP.delete(p) : st.selP.add(p); renderDynamic(); }
+    else if (st.mode === 'add') editToken(p, 1);
+    else if (st.mode === 'sub') editToken(p, -1);
+    refocus('[data-p="' + CSS.escape(p) + '"]');
+  }
+}
+function refocus(sel){ const el = document.querySelector('#canvas ' + sel); if (el && el.getAttribute('tabindex') !== null && document.activeElement === document.body) el.focus({ preventScroll:true }); }
+
+/* ---------- Start ---------- */
+st.li = (typeof store.last === 'number' && store.last >= 0 && store.last < LESSONS.length) ? store.last : 0;
+loadExample();
+renderNav();
+renderLesson();
+</script>
+</body>
+</html>
